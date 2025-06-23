@@ -13,26 +13,31 @@ class Array {
     uint32_t numberElements;
     uint32_t *metadataLengths;
     uint32_t *metadata;
-    uint8_t *elements = nullptr;
-    uint8_t *nulls = nullptr;
-    char *strings = nullptr;
+    uint8_t *elements;
+    uint8_t *nulls;
+    char *strings;
 
     template<class TYPE>
-    static void castElement(std::string &value, char *writer);
-    static void castNulls(std::vector<bool> &nulls, char *writer);
-    static size_t calculateSize(uint32_t dimensions, uint32_t numberElements, uint32_t metadataSize, uint32_t nullSize, uint32_t stringSize, mlir::Type type);
+    static void castElement(std::string &value, char *&writer);
+    static void castNulls(std::vector<bool> &nulls, char *&writer);
+    static size_t getStringSize(uint32_t dimensions, uint32_t numberElements, uint32_t metadataSize, uint32_t nullSize, uint32_t stringSize, mlir::Type type);
+    static size_t getTypeSize(mlir::Type type);
+
+    size_t getMetadataLength();
+    size_t getBrackets(uint32_t position);
     
     template<class TYPE>
-    std::string toString(int32_t position);
+    std::string toString(uint32_t position);
+
+    void appendStringValue(std::string &target, uint32_t position);
 
     bool checkNull(int32_t position);
-    int32_t countNulls();
+    uint32_t countNulls();
 
     public:
-    Array(std::string array, mlir::Type type);
-    ~Array();
+    Array(std::string &array, mlir::Type type);
 
     static void fromString(std::string &source, std::string &target, mlir::Type type);
 
-    std::string str(mlir::Type type);
+    std::string print(mlir::Type type);
 };

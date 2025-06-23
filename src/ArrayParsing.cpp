@@ -6,7 +6,6 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
     uint32_t dimensionsCounter = 0;
     uint32_t elementCounter = 0;
     uint32_t metadataIndex = 0;
-    bool insideString = false;
     std::vector<std::string> elements;
     std::vector<uint32_t> stringLengths;
     std::vector<uint32_t> metadataLengths;
@@ -62,12 +61,13 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
             case 'n':
             case 'N':
             {
-                if (!insideString && symbol + 4 < source.end()) {
+                if (symbol + 4 < source.end()) {
                     char possibleU = *(symbol + 1);
                     char possibleL1 = *(symbol + 2);
                     char possibleL2 = *(symbol + 3);
                     if ((possibleU == 'u' || possibleU == 'U') && (possibleL1 == 'l' || possibleL1 == 'L') && (possibleL2 == 'l' || possibleL2 == 'L')) {
                         nulls.push_back(true);
+                        elementCounter++;
                         symbol += 3;
                     }
                 }
@@ -85,11 +85,9 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
                 if (*symbol == '"') {
                     symbol++;
                     end++;
-                    insideString = true;
                 }
                 while (end < source.end()) {
                     if (*end == '"' && *(end - 1) != '\\') {
-                        insideString = false;
                         break;
                     }
                     if (*end == ',' && *(end - 1) != '\\') {
@@ -113,11 +111,12 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
             }
         }
     }
+    elementCounter -= std::count(nulls.begin(), nulls.end(), true);
     size_t totalStringSize = 0;
     for (auto &length : stringLengths) {
         totalStringSize += length;
     }
-    target.resize(calculateSize(dimensionsCounter, elementCounter, metadata.size(), nulls.size(), totalStringSize, type));
+    target.resize(getStringSize(dimensionsCounter, elementCounter, metadata.size(), nulls.size(), totalStringSize, type));
     char *writer = target.data();
     
     memcpy(writer, &dimensionsCounter, sizeof(uint32_t));
@@ -153,10 +152,13 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
     castNulls(nulls, writer);
 
     if (type == mlir::Type::STRING) {
-        memcpy(writer, elements.data(), totalStringSize);
+        for (auto &element : elements) {
+            memcpy(writer, element.data(), element.length());
+            writer += element.length();
+        }
     }
 
-    std::cout << dimensionsCounter << std::endl;
+    /* std::cout << dimensionsCounter << std::endl;
     std::cout << elementCounter << std::endl;
     for (auto &entry : metadataLengths) {
         std::cout << entry << ",";
@@ -177,29 +179,41 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
     for (auto entry : stringLengths) {
         std::cout << entry << ",";
     }
-    std::cout << std::endl;
+    std::cout << std::endl; */
 }
 
 
-std::string Array::str(mlir::Type type) {
+std::string Array::print(mlir::Type type) {
     std::string result = "";
-    /* int32_t *metadata = this->metadata;
-    size_t nulls = 0;
-    for(size_t i = 0; i < this->numberElements; i++) {
-        if (*metadata == i) {
-            result += "{";
-            metadata += 2;
+    size_t elementIdx = 0;
+    for(size_t i = 0; i < this->numberElements + countNulls(); i++) {
+        auto brackets = getBrackets(i);
+        bool isNull = checkNull(i);
+        if (i != 0 && brackets != 0) {
+            result.erase(result.length() - 1);
+            result.append(brackets, '}');
+            result.append(",");
         }
-        if (*(metadata - 1) == i) {
-            result += "}";
-        }
-        if (checkNull(i)) {
-            values.push_back("null");
+        result.append(brackets, '{');
+        if (isNull) {
+            result.append("null");
         } else {
             if (type == mlir::Type::INTEGER) {
-                values
+                result.append(toString<int32_t>(elementIdx));
+            } else if (type == mlir::Type::BIGINTEGER) {
+                result.append(toString<int64_t>(elementIdx));
+            } else if (type == mlir::Type::FLOAT) {
+                result.append(toString<float>(elementIdx));
+            } else if (type == mlir::Type::DOUBLE) {
+                result.append(toString<double>(elementIdx));
+            } else {
+                appendStringValue(result, elementIdx);
             }
+            elementIdx++;
         }
-    } */
-   return "";
+        result.append(",");
+    }
+    result.erase(result.length() - 1);
+    result.append(this->numberDimensions, '}');
+    return result;
 }

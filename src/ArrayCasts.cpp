@@ -1,7 +1,7 @@
 #include "../include/Array.h"
 
 template<>
-void Array::castElement<int32_t>(std::string &value, char *writer) {
+void Array::castElement<int32_t>(std::string &value, char *&writer) {
     try {
         int32_t castValue = std::stoi(value);
         memcpy(writer, &castValue, sizeof(int32_t));
@@ -14,7 +14,7 @@ void Array::castElement<int32_t>(std::string &value, char *writer) {
 }
 
 template<>
-void Array::castElement<int64_t>(std::string &value, char *writer) {
+void Array::castElement<int64_t>(std::string &value, char *&writer) {
     try {
         int64_t castValue = std::stol(value);
         memcpy(writer, &castValue, sizeof(int64_t));
@@ -27,7 +27,7 @@ void Array::castElement<int64_t>(std::string &value, char *writer) {
 }
 
 template<>
-void Array::castElement<float>(std::string &value, char *writer) {
+void Array::castElement<float>(std::string &value, char *&writer) {
     try {
         float castValue = std::stof(value);
         memcpy(writer, &castValue, sizeof(float));
@@ -40,7 +40,7 @@ void Array::castElement<float>(std::string &value, char *writer) {
 }
 
 template<>
-void Array::castElement<double>(std::string &value, char *writer) {
+void Array::castElement<double>(std::string &value, char *&writer) {
     try {
         double castValue = std::stod(value);
         memcpy(writer, &castValue, sizeof(double));
@@ -52,7 +52,7 @@ void Array::castElement<double>(std::string &value, char *writer) {
     }
 }
 
-void Array::castNulls(std::vector<bool> &nulls, char *writer) {
+void Array::castNulls(std::vector<bool> &nulls, char *&writer) {
     for (size_t i = 0; i < nulls.size(); i++) {
         if (i != 0 && i % 8 == 0) {
             writer += 1;
@@ -67,27 +67,31 @@ void Array::castNulls(std::vector<bool> &nulls, char *writer) {
 }
 
 template<>
-void Array::castElement<std::string>(std::string &value, char *writer) {
+void Array::castElement<std::string>(std::string &value, char *&writer) {
     memcpy(writer, &value, value.size());
     writer += value.size();
 }
 
 template<>
-std::string Array::toString<int32_t>(int32_t position) {
-    return std::to_string(*(this->elements + position * sizeof(int32_t)));
+std::string Array::toString<int32_t>(uint32_t position) {
+    int32_t value = *reinterpret_cast<int32_t*>(this->elements + position * sizeof(int32_t));
+    return std::to_string(value);
 }
 
 template<>
-std::string Array::toString<int64_t>(int32_t position) {
-    return std::to_string(*(this->elements + position * sizeof(int64_t)));
+std::string Array::toString<int64_t>(uint32_t position) {
+    int64_t value = *reinterpret_cast<int64_t*>(this->elements + position * sizeof(int64_t));
+    return std::to_string(value);
 }
 
 template<>
-std::string Array::toString<float>(int32_t position) {
-    return std::to_string(*(this->elements + position * sizeof(float)));
+std::string Array::toString<float>(uint32_t position) {
+    float value = *reinterpret_cast<float*>(this->elements + position * sizeof(float));
+    return std::to_string(value);
 }
 
 template<>
-std::string Array::toString<double>(int32_t position) {
-    return std::to_string(*(this->elements + position * sizeof(double)));
+std::string Array::toString<double>(uint32_t position) {
+    double value = *reinterpret_cast<double*>(this->elements + position * sizeof(double));
+    return std::to_string(value);
 }
