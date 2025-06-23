@@ -5,16 +5,20 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
     uint32_t dimension = 0;
     uint32_t dimensionsCounter = 0;
     uint32_t elementCounter = 0;
+    // Index to know which metadata entry should be updated
     uint32_t metadataIndex = 0;
     std::vector<std::string> elements;
     std::vector<uint32_t> stringLengths;
     std::vector<uint32_t> metadataLengths;
     std::vector<std::pair<uint32_t, uint32_t>> metadata;
     std::vector<bool> nulls;
+    // Iterate over each character from the given string
     for(auto symbol = source.begin(); symbol != source.end(); symbol++) {
         switch(*symbol) {
+            // Enter next lower dimension
             case '{':
             {
+                // Determine the position to add a new pair for metadata
                 auto insertPosition = metadata.begin();
                 for (size_t i = 0; i < metadataLengths.size(); i++) {
                     if (i > dimension) {
@@ -22,21 +26,28 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
                     }
                     insertPosition += metadataLengths[i];
                 }
+                // Add new metadata entry with known offset and unknown length
                 auto insert = metadata.insert(insertPosition, std::make_pair(elementCounter, 0));
                 metadataIndex = insert - metadata.begin();
                 dimension++;
+                // Add new length information if completely new dimension has been discovered
                 if (dimension > dimensionsCounter) {
                     metadataLengths.push_back(1);
+                // Otherwise increase length of already existing one
                 } else {
                     metadataLengths[dimension - 1] += 1;
                 }
+                // Update absolute number of dimensions
                 dimensionsCounter = std::max(dimension, dimensionsCounter);
                 break;
             }
+            // Enter previous upper dimension
             case '}':
             {
+                // Update metadata entry by setting its length
                 metadata[metadataIndex].second = elementCounter - metadata[metadataIndex].first;
                 dimension--;
+                // Determine the index of the last metadata entry that corresponds to the upper dimension
                 auto modifyPosition = metadata.begin();
                 for (size_t i = 0; i < metadataLengths.size(); i++) {
                     if (i + 1 > dimension) {
@@ -48,6 +59,7 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
                 metadataIndex = modifyPosition - metadata.begin();
                 break;
             }
+            // Only check if syntax is correct
             case ',':
             {
                 while(symbol < source.end() && isspace(*(symbol + 1))) {
@@ -58,6 +70,7 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
                 }
                 break;
             }
+            // Check if NULL value has been discovered
             case 'n':
             case 'N':
             {
@@ -73,19 +86,23 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
                 }
                 break;
             }
+            // Ignore these special characters
             case ' ':
             case '\\':
             case '\t':
             case '\n':
             case '\r':
                 break;
+            // Default = New array element discovered
             default:
             {
+                // Jump over " if present
                 auto end = symbol;
                 if (*symbol == '"') {
                     symbol++;
                     end++;
                 }
+                // Find end of array element
                 while (end < source.end()) {
                     if (*end == '"' && *(end - 1) != '\\') {
                         break;
@@ -98,7 +115,9 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
                     }
                     end++;
                 }
+                // Add discovered element
                 elements.push_back(std::string(symbol, end));
+                // If type is STRING, also store the elements length
                 if (type == mlir::Type::STRING) {
                     stringLengths.push_back(end - symbol);
                     symbol = end;
@@ -111,14 +130,18 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
             }
         }
     }
+    // Remove number of NULL values
     elementCounter -= std::count(nulls.begin(), nulls.end(), true);
+    // Get total size of all string values (if type is STRING)
     size_t totalStringSize = 0;
     for (auto &length : stringLengths) {
         totalStringSize += length;
     }
+    // Set new size of target string
     target.resize(getStringSize(dimensionsCounter, elementCounter, metadata.size(), nulls.size(), totalStringSize, type));
     char *writer = target.data();
     
+    // Now copy each information into the target string
     memcpy(writer, &dimensionsCounter, sizeof(uint32_t));
     writer += sizeof(uint32_t);
     memcpy(writer, &elementCounter, sizeof(uint32_t));
@@ -158,6 +181,7 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
         }
     }
 
+    // Currently only for debugging purposes
     /* std::cout << dimensionsCounter << std::endl;
     std::cout << elementCounter << std::endl;
     for (auto &entry : metadataLengths) {
