@@ -1,66 +1,68 @@
 #include "../include/Array.h"
+#include <iostream>
 
-void Array::createNulls(std::vector<bool> &nulls) {
-    int32_t size = std::ceil(nulls.size() / 8);
-    this->nulls = new uint8_t[size];
-    uint8_t value = 0; 
-    size_t index = 0;
-    for (size_t i = 0; i < nulls.size(); i++) {
-        if (i % 8 == 0) {
-            this->nulls[index] = value;
-            value = 0;
-            index++;
-        }
-        if (nulls[i]) {
-            uint8_t index = i % 8;
-            uint8_t shift = 8 - index - 1;
-            value = value || (1 << shift);
-        }
-    }
-}
-
-void Array::createElements(std::vector<std::string> &elements, mlir::Type type) {
-    if (type == mlir::Type::INTEGER) {
-        castElements<int32_t>(elements);
-    } else if (type == mlir::Type::BIGINTEGER) {
-        castElements<int64_t>(elements);
-    } else if (type == mlir::Type::FLOAT) {
-        castElements<float>(elements);
-    } else if (type == mlir::Type::DOUBLE) {
-        castElements<double>(elements);
-    } else if (type == mlir::Type::STRING) {
-        castElements<std::string>(elements);
-    } else {
-        throw std::runtime_error("Specified type is not supported with arrays");
-    }
-}
-
-void Array::parseString(std::string array, std::vector<std::string> &data, mlir::Type type) {
-    uint32_t dimensions = 0;
+void Array::fromString(std::string &source, std::string &target, mlir::Type type) {
+    uint32_t dimension = 0;
+    uint32_t dimensionsCounter = 0;
     uint32_t elementCounter = 0;
-    uint64_t metadata_index = 0;
+    uint32_t metadataIndex = 0;
     bool insideString = false;
-    std::vector<int32_t> metadataLengths;
-    std::vector<std::pair<int32_t, int32_t>> metadata;
+    std::vector<std::string> elements;
+    std::vector<uint32_t> stringLengths;
+    std::vector<uint32_t> metadataLengths;
+    std::vector<std::pair<uint32_t, uint32_t>> metadata;
     std::vector<bool> nulls;
-    for(auto symbol = array.begin(); symbol != array.end(); symbol++) {
+    for(auto symbol = source.begin(); symbol != source.end(); symbol++) {
         switch(*symbol) {
             case '{':
-                dimensions++;
-                metadata_index = metadata_index == 0 ? 0 : metadata_index + 1;
-                metadata.insert(metadata.end(), std::make_pair(elementCounter, 0));
-                metadataLengths.insert(metadataLengths.end(), 1);
+            {
+                auto insertPosition = metadata.begin();
+                for (size_t i = 0; i < metadataLengths.size(); i++) {
+                    if (i > dimension) {
+                        break;
+                    }
+                    insertPosition += metadataLengths[i];
+                }
+                auto insert = metadata.insert(insertPosition, std::make_pair(elementCounter, 0));
+                metadataIndex = insert - metadata.begin();
+                dimension++;
+                if (dimension > dimensionsCounter) {
+                    metadataLengths.push_back(1);
+                } else {
+                    metadataLengths[dimension - 1] += 1;
+                }
+                dimensionsCounter = std::max(dimension, dimensionsCounter);
                 break;
+            }
             case '}':
-                metadata[metadata_index].second = elementCounter - metadata[metadata_index].first;
-                metadata_index--;
+            {
+                metadata[metadataIndex].second = elementCounter - metadata[metadataIndex].first;
+                dimension--;
+                auto modifyPosition = metadata.begin();
+                for (size_t i = 0; i < metadataLengths.size(); i++) {
+                    if (i + 1 > dimension) {
+                        break;
+                    }
+                    modifyPosition += metadataLengths[i];
+                }
+                modifyPosition--;
+                metadataIndex = modifyPosition - metadata.begin();
                 break;
+            }
             case ',':
-                metadataLengths[metadata_index]++;
+            {
+                while(symbol < source.end() && isspace(*(symbol + 1))) {
+                    symbol++;
+                }
+                if (symbol + 1 < source.end() && (*(symbol + 1) == ',' || *(symbol + 1) == '}')) {
+                    throw std::runtime_error("Invalid array specification");
+                }
                 break;
+            }
             case 'n':
             case 'N':
-                if (!insideString && symbol + 4 < array.end()) {
+            {
+                if (!insideString && symbol + 4 < source.end()) {
                     char possibleU = *(symbol + 1);
                     char possibleL1 = *(symbol + 2);
                     char possibleL2 = *(symbol + 3);
@@ -70,46 +72,134 @@ void Array::parseString(std::string array, std::vector<std::string> &data, mlir:
                     }
                 }
                 break;
+            }
             case ' ':
+            case '\\':
             case '\t':
             case '\n':
             case '\r':
                 break;
             default:
+            {
                 auto end = symbol;
                 if (*symbol == '"') {
                     symbol++;
                     end++;
                     insideString = true;
                 }
-                while (end < array.end()) {
-                    if (*end == '"' && *(end - 1) != '\\' && !insideString) {
+                while (end < source.end()) {
+                    if (*end == '"' && *(end - 1) != '\\') {
                         insideString = false;
                         break;
                     }
-                    if (*end == ',' && *(end - 1) != '\\' && !insideString) {
+                    if (*end == ',' && *(end - 1) != '\\') {
                         break;
                     }
-                    if (*end == '}' && *(end - 1) != '\\' && !insideString) {
+                    if (*end == '}' && *(end - 1) != '\\') {
                         break;
                     }
                     end++;
                 }
-                data.push_back(std::string(symbol, end));
+                elements.push_back(std::string(symbol, end));
+                if (type == mlir::Type::STRING) {
+                    stringLengths.push_back(end - symbol);
+                    symbol = end;
+                } else {
+                    symbol = end - 1;
+                }
                 nulls.push_back(false);
                 elementCounter++;
-                symbol = end;
+                break;
+            }
         }
-    }    
-    
-    this->numberDimensions = dimensions;
-    this->numberElements = elementCounter;
-    this->metadataLengths = new int32_t[metadataLengths.size()];
-    this->metadata = new int32_t[metadata.size() * 2];
-    std::copy(metadataLengths.begin(), metadataLengths.end(), this->metadataLengths);
-    for (size_t i = 0; i < metadata.size(); i++) {
-        this->metadata[2*i] = metadata[i].first;
-        this->metadata[2*i+1] = metadata[i].second;
     }
-    createNulls(nulls);
+    size_t totalStringSize = 0;
+    for (auto &length : stringLengths) {
+        totalStringSize += length;
+    }
+    target.resize(calculateSize(dimensionsCounter, elementCounter, metadata.size(), nulls.size(), totalStringSize, type));
+    char *writer = target.data();
+    
+    memcpy(writer, &dimensionsCounter, sizeof(uint32_t));
+    writer += sizeof(uint32_t);
+    memcpy(writer, &elementCounter, sizeof(uint32_t));
+    writer += sizeof(uint32_t);
+    memcpy(writer, metadataLengths.data(), metadataLengths.size() * sizeof(uint32_t));
+    writer += metadataLengths.size() * sizeof(uint32_t);
+    memcpy(writer, metadata.data(), metadata.size() * sizeof(std::pair<uint32_t, uint32_t>));
+    writer += metadata.size() * sizeof(std::pair<uint32_t, uint32_t>);
+
+    if (type == mlir::Type::STRING) {
+        for (auto &length : stringLengths) {
+            memcpy(writer, &length, sizeof(uint32_t));
+            writer += sizeof(uint32_t);
+        }
+    } else {
+        for (auto &element : elements) {
+            if (type == mlir::Type::INTEGER) {
+                castElement<int32_t>(element, writer);
+            } else if (type == mlir::Type::BIGINTEGER) {
+                castElement<int64_t>(element, writer);
+            } else if (type == mlir::Type::FLOAT) {
+                castElement<float>(element, writer);
+            } else if (type == mlir::Type::DOUBLE) {
+                castElement<double>(element, writer);
+            } else {
+                throw std::runtime_error("Given type is not supported in arrays");
+            }
+        }
+    }
+
+    castNulls(nulls, writer);
+
+    if (type == mlir::Type::STRING) {
+        memcpy(writer, elements.data(), totalStringSize);
+    }
+
+    std::cout << dimensionsCounter << std::endl;
+    std::cout << elementCounter << std::endl;
+    for (auto &entry : metadataLengths) {
+        std::cout << entry << ",";
+    }
+    std::cout << std::endl;
+    for (auto &entry : metadata) {
+        std::cout << "{" << entry.first << ":" << entry.second << "}";
+    }
+    std::cout << std::endl;
+    for (auto &entry : elements) {
+        std::cout << entry << ",";
+    }
+    std::cout << std::endl;
+    for (auto entry : nulls) {
+        std::cout << entry << ",";
+    }
+    std::cout << std::endl;
+    for (auto entry : stringLengths) {
+        std::cout << entry << ",";
+    }
+    std::cout << std::endl;
+}
+
+
+std::string Array::str(mlir::Type type) {
+    std::string result = "";
+    /* int32_t *metadata = this->metadata;
+    size_t nulls = 0;
+    for(size_t i = 0; i < this->numberElements; i++) {
+        if (*metadata == i) {
+            result += "{";
+            metadata += 2;
+        }
+        if (*(metadata - 1) == i) {
+            result += "}";
+        }
+        if (checkNull(i)) {
+            values.push_back("null");
+        } else {
+            if (type == mlir::Type::INTEGER) {
+                values
+            }
+        }
+    } */
+   return "";
 }
