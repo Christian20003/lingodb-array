@@ -4,6 +4,7 @@
 void Array::fromString(std::string &source, std::string &target, mlir::Type type) {
     uint32_t dimension = 0;
     uint32_t dimensionsCounter = 0;
+    uint32_t dimensionOfFirstElement = 0;
     uint32_t elementCounter = 0;
     // Index to know which metadata entry should be updated
     uint32_t metadataIndex = 0;
@@ -46,6 +47,10 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
             {
                 // Update metadata entry by setting its length
                 metadata[metadataIndex].second = elementCounter - metadata[metadataIndex].first;
+                // Empty subarrays are currently restricted
+                if (metadata[metadataIndex].second == 0 && dimension == dimensionOfFirstElement) {
+                    throw std::runtime_error("Unsupported feature: Empty array without elements on last level");
+                }
                 dimension--;
                 // Determine the index of the last metadata entry that corresponds to the upper dimension
                 auto modifyPosition = metadata.begin();
@@ -66,7 +71,7 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
                     symbol++;
                 }
                 if (symbol + 1 < source.end() && (*(symbol + 1) == ',' || *(symbol + 1) == '}')) {
-                    throw std::runtime_error("Invalid array specification");
+                    throw std::runtime_error("Invalid array specification: Syntax error near " + std::string(symbol, symbol + 2));
                 }
                 break;
             }
@@ -79,6 +84,12 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
                     char possibleL1 = *(symbol + 2);
                     char possibleL2 = *(symbol + 3);
                     if ((possibleU == 'u' || possibleU == 'U') && (possibleL1 == 'l' || possibleL1 == 'L') && (possibleL2 == 'l' || possibleL2 == 'L')) {
+                        // Check if all elements are at the same dimension level
+                        if (dimensionOfFirstElement == 0) {
+                            dimensionOfFirstElement = dimension;
+                        } else if (dimensionOfFirstElement != dimension) {
+                            throw std::runtime_error("Invalid array specification: Inconsistent dimensions - found elements in different dimensions");
+                        }
                         nulls.push_back(true);
                         elementCounter++;
                         symbol += 3;
@@ -96,6 +107,12 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
             // Default = New array element discovered
             default:
             {
+                // Check if all elements are at the same dimension level
+                if (dimensionOfFirstElement == 0) {
+                    dimensionOfFirstElement = dimension;
+                } else if (dimensionOfFirstElement != dimension) {
+                    throw std::runtime_error("Invalid array specification: Inconsistent dimensions - found elements in different dimensions");
+                }
                 // Jump over " if present
                 auto end = symbol;
                 if (*symbol == '"') {
@@ -182,7 +199,7 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
     }
 
     // Currently only for debugging purposes
-    /* std::cout << dimensionsCounter << std::endl;
+    std::cout << dimensionsCounter << std::endl;
     std::cout << elementCounter << std::endl;
     for (auto &entry : metadataLengths) {
         std::cout << entry << ",";
@@ -203,41 +220,6 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
     for (auto entry : stringLengths) {
         std::cout << entry << ",";
     }
-    std::cout << std::endl; */
+    std::cout << std::endl;
 }
 
-
-std::string Array::print(mlir::Type type) {
-    std::string result = "";
-    size_t elementIdx = 0;
-    for(size_t i = 0; i < this->numberElements + countNulls(); i++) {
-        auto brackets = getBrackets(i);
-        bool isNull = checkNull(i);
-        if (i != 0 && brackets != 0) {
-            result.erase(result.length() - 1);
-            result.append(brackets, '}');
-            result.append(",");
-        }
-        result.append(brackets, '{');
-        if (isNull) {
-            result.append("null");
-        } else {
-            if (type == mlir::Type::INTEGER) {
-                result.append(toString<int32_t>(elementIdx));
-            } else if (type == mlir::Type::BIGINTEGER) {
-                result.append(toString<int64_t>(elementIdx));
-            } else if (type == mlir::Type::FLOAT) {
-                result.append(toString<float>(elementIdx));
-            } else if (type == mlir::Type::DOUBLE) {
-                result.append(toString<double>(elementIdx));
-            } else {
-                appendStringValue(result, elementIdx);
-            }
-            elementIdx++;
-        }
-        result.append(",");
-    }
-    result.erase(result.length() - 1);
-    result.append(this->numberDimensions, '}');
-    return result;
-}

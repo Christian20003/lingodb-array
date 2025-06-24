@@ -51,3 +51,16 @@ size_t Array::getBrackets(uint32_t position) {
     }
     return result;
 }
+
+size_t Array::getEmptyElement(uint32_t position) {
+    size_t metadataIdx = 0;
+    for (size_t i = 0; i < this->numberDimensions; i++) {
+        for (size_t j = 0; j < this->metadataLengths[i]; j++) {
+            if (position == this->metadata[metadataIdx] && this->metadata[metadataIdx + 1] == 0) {
+                return i+1;
+            }
+            metadataIdx += 2;
+        }
+    }
+    return 0;
+}

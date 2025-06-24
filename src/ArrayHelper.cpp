@@ -7,9 +7,9 @@ bool Array::checkNull(int32_t position) {
     return 1 & this->nulls[element] >> shift;
 }
 
-uint32_t Array::countNulls() {
+uint32_t Array::countNulls(uint32_t maxPosition) {
     uint32_t result = 0;
-    for (size_t i = 0; i < this->numberElements; i++) {
+    for (size_t i = 0; i < maxPosition; i++) {
         if (checkNull(i)) {
             result++;
         }

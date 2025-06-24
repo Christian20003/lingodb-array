@@ -3,6 +3,7 @@ add_library(ArrayBasics
     Array.cpp
     ArrayCasts.cpp
     ArrayParsing.cpp
+    ArrayPrint.cpp
     ArrayGetter.cpp
     ArrayHelper.cpp
 )

@@ -45,14 +45,18 @@ class Array {
 
     size_t getMetadataLength();
     size_t getBrackets(uint32_t position);
+
+    size_t getEmptyElement(uint32_t position);
     
     template<class TYPE>
     std::string toString(uint32_t position);
 
     void appendStringValue(std::string &target, uint32_t position);
 
+    bool transform(std::string &target, uint32_t offset, uint32_t length, uint32_t dimension, mlir::Type type);
+
     bool checkNull(int32_t position);
-    uint32_t countNulls();
+    uint32_t countNulls(uint32_t maxPosition);
 
     public:
     /**
