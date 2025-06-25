@@ -2,16 +2,23 @@
 #include <iostream>
 
 void Array::fromString(std::string &source, std::string &target, mlir::Type type) {
+    // Stores the dimension in which the parsing is
     uint32_t dimension = 0;
+    // Stores the overall dimensions of this array
     uint32_t dimensionsCounter = 0;
-    uint32_t dimensionOfFirstElement = 0;
+    // Stores the overall number of elements (with NULL values)
     uint32_t elementCounter = 0;
     // Index to know which metadata entry should be updated
     uint32_t metadataIndex = 0;
+    // Stores array elements
     std::vector<std::string> elements;
+    // Stores string lengths (if string is actual array type)
     std::vector<uint32_t> stringLengths;
+    // Stores metadata lengths for each dimension
     std::vector<uint32_t> metadataLengths;
+    // Stores metadata information
     std::vector<std::tuple<uint32_t, uint32_t, uint32_t>> metadata;
+    // Stores null values
     std::vector<bool> nulls;
     // Iterate over each character from the given string
     for(auto symbol = source.begin(); symbol != source.end(); symbol++) {
@@ -19,6 +26,7 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
             // Enter next lower dimension
             case '{':
             {
+                // If not in first dimension, update dimension-length of upper dimension
                 if (metadata.size() != 0) {
                     std::get<2>(metadata[metadataIndex]) += 1;
                 }
@@ -30,7 +38,7 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
                     }
                     insertPosition += metadataLengths[i];
                 }
-                // Add new metadata entry with known offset and unknown length
+                // Add new metadata entry with known element-offset
                 auto insert = metadata.insert(insertPosition, std::make_tuple(elementCounter, 0, 0));
                 metadataIndex = insert - metadata.begin();
                 dimension++;
@@ -48,12 +56,8 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
             // Enter previous upper dimension
             case '}':
             {
-                // Update metadata entry by setting its length
+                // Update metadata entry by setting element-length
                 std::get<1>(metadata[metadataIndex]) = elementCounter - std::get<0>(metadata[metadataIndex]);
-                // Empty subarrays are currently restricted
-                /* if (metadata[metadataIndex].second == 0 && dimension == dimensionOfFirstElement) {
-                    throw std::runtime_error("Unsupported feature: Empty array without elements on last level");
-                } */
                 dimension--;
                 // Determine the index of the last metadata entry that corresponds to the upper dimension
                 auto modifyPosition = metadata.begin();
@@ -152,7 +156,7 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
         totalStringSize += length;
     }
     // Set new size of target string
-    target.resize(getStringSize(dimensionsCounter, elementCounter, metadata.size(), nulls.size(), totalStringSize, type));
+    target.resize(getStringSize(dimensionsCounter, elementCounter, metadata.size(), std::ceil((double) nulls.size() / 8), totalStringSize, type));
     char *writer = target.data();
     
     // Now copy each information into the target string

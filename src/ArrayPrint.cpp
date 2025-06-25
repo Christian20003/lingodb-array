@@ -6,29 +6,30 @@ std::string Array::print(mlir::Type type) {
     return result;
 }
 
-void Array::transform(std::string &target, uint32_t offset, uint32_t length, uint32_t subarray, uint32_t ignore, uint32_t dimension, mlir::Type type) {
+void Array::transform(std::string &target, uint32_t elemOffset, uint32_t elemLength, uint32_t dimLength, uint32_t childNumber, uint32_t dimension, mlir::Type type) {
+    // Reached last dimension
     if (dimension == this->numberDimensions) {
         target.append("{");
-        if (length != 0) {
-            size_t elementIdx = offset - countNulls(offset);
-            for (size_t j = offset; j < offset + length; j++) {
-                if (checkNull(j)) {
+        // Proof if array element is empty
+        if (elemLength != 0) {
+            // Iterate over each element and add it to result
+            for (size_t i = elemOffset; i < elemOffset + elemLength; i++) {
+                if (checkNull(i)) {
                     target.append("null");
                 } else {
                     if (type == mlir::Type::INTEGER) {
-                        target.append(toString<int32_t>(elementIdx));
+                        target.append(toString<int32_t>(getElementPosition(i)));
                     } else if (type == mlir::Type::BIGINTEGER) {
-                        target.append(toString<int64_t>(elementIdx));
+                        target.append(toString<int64_t>(getElementPosition(i)));
                     } else if (type == mlir::Type::FLOAT) {
-                        target.append(toString<float>(elementIdx));
+                        target.append(toString<float>(getElementPosition(i)));
                     } else if (type == mlir::Type::DOUBLE) {
-                        target.append(toString<double>(elementIdx));
+                        target.append(toString<double>(getElementPosition(i)));
                     } else {
-                        appendStringValue(target, elementIdx);
+                        appendStringValue(target, getElementPosition(i));
                     }
-                    elementIdx++;
                 }
-                if (j + 1 != offset + length) {
+                if (i + 1 != elemOffset + elemLength) {
                     target.append(",");
                 }
             }
@@ -36,50 +37,45 @@ void Array::transform(std::string &target, uint32_t offset, uint32_t length, uin
         target.append("}");
         return;
     }
-    auto *start = this->metadata;
-    for (size_t i = 0; i < (size_t) dimension; i++) {
-        start += this->metadataLengths[i] * 3;
-    }
-    uint32_t ignoreMetadata = 0;
-    for (size_t i = 0; i < ignore * 3; i += 3) {
-        ignoreMetadata += start[i+2];
-    }
-    start += ignore * 3;
+    // Get a pointer to the first metadata entry which belongs to the next lower dimension
+    auto *start = getFirstChild(dimension, childNumber);
     target.append("{");
-    if (subarray != 0) {
-        for (size_t i = 0; i < subarray * 3; i += 3) {
-            if (start[i] == 11) {
-                int j = 0;
-            }
+    // Check if current metadata entry has elements
+    if (dimLength != 0) {
+        // Iterate over each metadata entry belonging to the caller structure.
+        for (size_t i = 0; i < dimLength * 3; i += 3) {
+            // Check if first element is a null value
             if (i == 0) {
-                if(start[i] != offset && checkNull(offset)) {
+                if(start[i] != elemOffset && checkNull(elemOffset)) {
                     target.append("null");
                     target.append(",");
                 }
+            // Check if previous element is a null value
             } else {
                 if (start[i] > start[i-3] + start[i-2] && checkNull(start[i-3] + start[i-2])) {
                     target.append("null");
                     target.append(",");
                 }
             }
-
-            transform(target, start[i], start[i+1], start[i+2], ignoreMetadata, dimension + 1, type);
+            // Call function with its children array structure
+            transform(target, start[i], start[i+1], start[i+2], getChildNumber(start + i, dimension + 1), dimension + 1, type);
             target.append(",");
 
-            if (i + 3 == subarray * 3) {
-                if (start[i] + start[i+1] < offset + length && checkNull(offset + length - 1)) {
+            // Check if last element is null value
+            if (i + 3 == dimLength * 3) {
+                if (start[i] + start[i+1] < elemOffset + elemLength && checkNull(elemOffset + elemLength - 1)) {
                     target.append("null");
                     target.append(",");
                 }
             }
-            ignoreMetadata += start[i+2];
         }
-    } else if (subarray == 0 && length == 1) {
-        if (checkNull(offset)) {
+    // Check if there is a null value 
+    } else if (dimLength == 0 && elemLength == 1) {
+        if (checkNull(elemOffset)) {
             target.append("null");
         }
     }
-    if (subarray != 0) {
+    if (dimLength != 0) {
         target.erase(target.length() - 1);
     }
     target.append("}");
