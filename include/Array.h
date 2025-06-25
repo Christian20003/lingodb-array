@@ -5,6 +5,7 @@
 #include <cmath>
 #include <algorithm>
 #include <cstring>
+#include <tuple>
 #include "../include/Types.h" 
 
 /**
@@ -53,7 +54,7 @@ class Array {
 
     void appendStringValue(std::string &target, uint32_t position);
 
-    bool transform(std::string &target, uint32_t offset, uint32_t length, uint32_t dimension, mlir::Type type);
+    void transform(std::string &target, uint32_t offset, uint32_t length, uint32_t subarray, uint32_t ignore, uint32_t dimension, mlir::Type type);
 
     bool checkNull(int32_t position);
     uint32_t countNulls(uint32_t maxPosition);

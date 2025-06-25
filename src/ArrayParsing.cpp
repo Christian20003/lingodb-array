@@ -11,7 +11,7 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
     std::vector<std::string> elements;
     std::vector<uint32_t> stringLengths;
     std::vector<uint32_t> metadataLengths;
-    std::vector<std::pair<uint32_t, uint32_t>> metadata;
+    std::vector<std::tuple<uint32_t, uint32_t, uint32_t>> metadata;
     std::vector<bool> nulls;
     // Iterate over each character from the given string
     for(auto symbol = source.begin(); symbol != source.end(); symbol++) {
@@ -19,6 +19,9 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
             // Enter next lower dimension
             case '{':
             {
+                if (metadata.size() != 0) {
+                    std::get<2>(metadata[metadataIndex]) += 1;
+                }
                 // Determine the position to add a new pair for metadata
                 auto insertPosition = metadata.begin();
                 for (size_t i = 0; i < metadataLengths.size(); i++) {
@@ -28,7 +31,7 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
                     insertPosition += metadataLengths[i];
                 }
                 // Add new metadata entry with known offset and unknown length
-                auto insert = metadata.insert(insertPosition, std::make_pair(elementCounter, 0));
+                auto insert = metadata.insert(insertPosition, std::make_tuple(elementCounter, 0, 0));
                 metadataIndex = insert - metadata.begin();
                 dimension++;
                 // Add new length information if completely new dimension has been discovered
@@ -46,11 +49,11 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
             case '}':
             {
                 // Update metadata entry by setting its length
-                metadata[metadataIndex].second = elementCounter - metadata[metadataIndex].first;
+                std::get<1>(metadata[metadataIndex]) = elementCounter - std::get<0>(metadata[metadataIndex]);
                 // Empty subarrays are currently restricted
-                if (metadata[metadataIndex].second == 0 && dimension == dimensionOfFirstElement) {
+                /* if (metadata[metadataIndex].second == 0 && dimension == dimensionOfFirstElement) {
                     throw std::runtime_error("Unsupported feature: Empty array without elements on last level");
-                }
+                } */
                 dimension--;
                 // Determine the index of the last metadata entry that corresponds to the upper dimension
                 auto modifyPosition = metadata.begin();
@@ -60,8 +63,10 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
                     }
                     modifyPosition += metadataLengths[i];
                 }
-                modifyPosition--;
-                metadataIndex = modifyPosition - metadata.begin();
+                if (modifyPosition != metadata.begin()) {
+                    modifyPosition--;
+                    metadataIndex = modifyPosition - metadata.begin();
+                }
                 break;
             }
             // Only check if syntax is correct
@@ -84,12 +89,6 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
                     char possibleL1 = *(symbol + 2);
                     char possibleL2 = *(symbol + 3);
                     if ((possibleU == 'u' || possibleU == 'U') && (possibleL1 == 'l' || possibleL1 == 'L') && (possibleL2 == 'l' || possibleL2 == 'L')) {
-                        // Check if all elements are at the same dimension level
-                        if (dimensionOfFirstElement == 0) {
-                            dimensionOfFirstElement = dimension;
-                        } else if (dimensionOfFirstElement != dimension) {
-                            throw std::runtime_error("Invalid array specification: Inconsistent dimensions - found elements in different dimensions");
-                        }
                         nulls.push_back(true);
                         elementCounter++;
                         symbol += 3;
@@ -108,9 +107,7 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
             default:
             {
                 // Check if all elements are at the same dimension level
-                if (dimensionOfFirstElement == 0) {
-                    dimensionOfFirstElement = dimension;
-                } else if (dimensionOfFirstElement != dimension) {
+                if (dimensionsCounter != dimension) {
                     throw std::runtime_error("Invalid array specification: Inconsistent dimensions - found elements in different dimensions");
                 }
                 // Jump over " if present
@@ -165,8 +162,14 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
     writer += sizeof(uint32_t);
     memcpy(writer, metadataLengths.data(), metadataLengths.size() * sizeof(uint32_t));
     writer += metadataLengths.size() * sizeof(uint32_t);
-    memcpy(writer, metadata.data(), metadata.size() * sizeof(std::pair<uint32_t, uint32_t>));
-    writer += metadata.size() * sizeof(std::pair<uint32_t, uint32_t>);
+    for (size_t i = 0; i < metadata.size(); i++) {
+        memcpy(writer, &std::get<0>(metadata[i]), sizeof(uint32_t));
+        writer += sizeof(uint32_t);
+        memcpy(writer, &std::get<1>(metadata[i]), sizeof(uint32_t));
+        writer += sizeof(uint32_t);
+        memcpy(writer, &std::get<2>(metadata[i]), sizeof(uint32_t));
+        writer += sizeof(uint32_t);
+    }
 
     if (type == mlir::Type::STRING) {
         for (auto &length : stringLengths) {
@@ -206,7 +209,7 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
     }
     std::cout << std::endl;
     for (auto &entry : metadata) {
-        std::cout << "{" << entry.first << ":" << entry.second << "}";
+        std::cout << "{" << std::get<0>(entry) << ":" << std::get<1>(entry) << ":" << std::get<2>(entry) << "}";
     }
     std::cout << std::endl;
     for (auto &entry : elements) {

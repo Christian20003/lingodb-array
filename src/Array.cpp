@@ -10,7 +10,7 @@ Array::Array(std::string &array, mlir::Type type) {
     data += this->numberDimensions * sizeof(uint32_t);
     this->metadata = reinterpret_cast<uint32_t*>(data);
     for (size_t i = 0; i < this->numberDimensions; i++) {
-        data += this->metadataLengths[i] * 2 * sizeof(uint32_t);
+        data += this->metadataLengths[i] * 3 * sizeof(uint32_t);
     }
     this->elements = reinterpret_cast<uint8_t*>(data);
     data += this->numberElements * getTypeSize(type);

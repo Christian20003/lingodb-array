@@ -1,7 +1,7 @@
 #include "../include/Array.h"
 
 size_t Array::getStringSize(uint32_t dimensions, uint32_t numberElements, uint32_t metadataSize, uint32_t nullSize, uint32_t stringSize, mlir::Type type) {
-    size_t size = sizeof(uint32_t) * 2 + dimensions * sizeof(uint32_t) + metadataSize * 2 * sizeof(uint32_t);
+    size_t size = sizeof(uint32_t) * 2 + dimensions * sizeof(uint32_t) + metadataSize * 3 * sizeof(uint32_t);
     if (type == mlir::Type::INTEGER) {
         size += numberElements * sizeof(int32_t);
     } else if (type == mlir::Type::BIGINTEGER || type == mlir::Type::STRING) {
