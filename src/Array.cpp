@@ -1,5 +1,7 @@
 #include "../include/Array.h"
 
+using lingodb::runtime::Array;
+
 Array::Array(std::string &array, mlir::Type type) {
     char *data = array.data();
     this->numberDimensions = *reinterpret_cast<uint32_t*>(data);

@@ -1,5 +1,8 @@
 #include "../include/Array.h"
 
+using lingodb::runtime::Array;
+using lingodb::runtime::VarLen32;
+
 size_t Array::getStringSize(uint32_t dimensions, uint32_t numberElements, uint32_t metadataSize, uint32_t nullSize, uint32_t stringSize, mlir::Type type) {
     size_t size = sizeof(uint32_t) * 2 + dimensions * sizeof(uint32_t) + metadataSize * 3 * sizeof(uint32_t);
     if (type == mlir::Type::INTEGER) {

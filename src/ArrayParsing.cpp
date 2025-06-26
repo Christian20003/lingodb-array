@@ -1,6 +1,8 @@
 #include "../include/Array.h"
 #include <iostream>
 
+using lingodb::runtime::Array;
+
 void Array::fromString(std::string &source, std::string &target, mlir::Type type) {
     // Stores the dimension in which the parsing is
     uint32_t dimension = 0;
@@ -206,7 +208,7 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
     }
 
     // Currently only for debugging purposes
-    std::cout << dimensionsCounter << std::endl;
+    /* std::cout << dimensionsCounter << std::endl;
     std::cout << elementCounter << std::endl;
     for (auto &entry : metadataLengths) {
         std::cout << entry << ",";
@@ -227,6 +229,6 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
     for (auto entry : stringLengths) {
         std::cout << entry << ",";
     }
-    std::cout << std::endl;
+    std::cout << std::endl; */
 }
 

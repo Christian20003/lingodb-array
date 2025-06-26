@@ -1,5 +1,7 @@
 #include "../include/Array.h"
 
+using lingodb::runtime::Array;
+
 bool Array::checkNull(uint32_t position) {
     uint32_t element = std::floor(position / 8);
     uint32_t index = position % 8;

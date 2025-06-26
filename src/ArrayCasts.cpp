@@ -1,5 +1,7 @@
 #include "../include/Array.h"
 
+using lingodb::runtime::Array;
+
 template<>
 void Array::castElement<int32_t>(std::string &value, char *&writer) {
     try {

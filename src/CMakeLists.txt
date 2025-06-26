@@ -6,4 +6,5 @@ add_library(ArrayBasics
     ArrayPrint.cpp
     ArrayGetter.cpp
     ArrayHelper.cpp
+    ArrayRuntime.cpp
 )

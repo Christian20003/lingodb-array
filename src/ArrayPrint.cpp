@@ -1,5 +1,7 @@
 #include "../include/Array.h"
 
+using lingodb::runtime::Array;
+
 std::string Array::print(mlir::Type type) {
     std::string result = "";
     transform(result, this->metadata[0], this->metadata[1], this->metadata[2], 0, 1, type);

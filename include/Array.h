@@ -6,7 +6,10 @@
 #include <algorithm>
 #include <cstring>
 #include <tuple>
+#include "../include/VarLen32.h"
 #include "../include/Types.h" 
+
+namespace lingodb::runtime {
 
 /**
  * This class represents an array structure in LingoDB.
@@ -174,3 +177,5 @@ class Array {
     std::string print(mlir::Type type);
 
 };
+
+}
