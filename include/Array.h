@@ -49,6 +49,21 @@ class Array {
     uint8_t *elements;
     uint8_t *nulls;
     char *strings;
+    mlir::Type type;
+
+/*
+ *##########################################################################################################################################################  
+ *                                                              PRIVATE METHODS
+ *##########################################################################################################################################################
+ */    
+
+    template<class TYPE>
+    static void writeToBuffer(char *&buffer, const TYPE *data, uint32_t size) {
+        memcpy(buffer, data, sizeof(TYPE) * size);
+        buffer += sizeof(TYPE) * size;
+    };
+
+    void printData();
 
     /**
      * This function casts a string into a value of the corresponding type `TYPE` and
@@ -93,9 +108,8 @@ class Array {
      */
     static size_t getTypeSize(mlir::Type type);
 
-    uint32_t *getFirstChild(uint32_t dimension, uint32_t childNumber);
-    uint32_t *getFirstElement(uint32_t dimension);
-    uint32_t getChildNumber(uint32_t *element, uint32_t dimension);
+    const uint32_t *getFirstChild(uint32_t dimension, uint32_t childNumber);
+    uint32_t getChildNumber(const uint32_t *element, uint32_t dimension);
     uint32_t getElementPosition(uint32_t position);
 
     /**
@@ -133,7 +147,7 @@ class Array {
      * @throws              `std::runtime_error`: If the provided array structure is
      *                      not valid (processable).
      */
-    void transform(std::string &target, uint32_t elemOffset, uint32_t elemLength, uint32_t dimLength, uint32_t childNumber, uint32_t dimension, mlir::Type type);
+    void transform(std::string &target, uint32_t elemOffset, uint32_t elemLength, uint32_t dimLength, uint32_t childNumber, uint32_t dimension);
 
     /**
      * This method proofs if at the given position is a NULL value.
@@ -143,15 +157,6 @@ class Array {
      * @returns         `True` if there is a NULL value, otherwise `False`.
      */
     bool checkNull(uint32_t position);
-
-    /**
-     * This function counts the number of NULL values till the given position.
-     * 
-     * @param maxPosition   The limit up to which position should be counted.
-     * 
-     * @returns             The number of NULL values.
-     */
-    uint32_t countNulls(uint32_t maxPosition);
 
     public:
     /**
@@ -173,8 +178,45 @@ class Array {
      *                  provided elements could not be casted to the specified type.
      */
     static void fromString(std::string &source, std::string &target, mlir::Type type);
+    static uint32_t countNullBytes(uint32_t numberElements);
 
-    std::string print(mlir::Type type);
+    void copyElements(char *&buffer);
+    void copyStrings(char *&buffer);
+    void appendNulls(char *&buffer, const uint8_t *nulls, uint32_t numberElements, uint32_t startNumber);
+
+    /**
+     * This function counts the number of NULL values till the given position.
+     * 
+     * @param maxPosition   The limit up to which position should be counted.
+     * 
+     * @returns             The number of NULL values.
+     */
+    uint32_t countNulls(uint32_t maxPosition);
+
+    const mlir::Type getType();
+    uint32_t getDimension();
+    uint32_t getNumberElements();
+    uint32_t getTotalNumberElements();
+    uint32_t getMetadataLength();
+    uint32_t getMetadataLength(uint32_t index);
+    uint32_t getTotalStringLength();
+    const uint32_t* getMetadata();
+    const uint8_t* getNulls();
+    const uint32_t* getFirstElement(uint32_t dimension);
+
+    /**
+     * This function appends the other array. Thereby a new array object will be
+     * created returned as `VarLen32` object.
+     * 
+     * @param other     A reference to the array that should be appended.
+     * @throws          `std::runtime_error`: If the array to be appended has more dimensions.
+     *                  If both arrays have different types.
+     * 
+     * @returns         The string in array processable format storing the extended array. 
+     */
+    VarLen32 append(Array &other);
+
+    std::string print();
 
 };
 

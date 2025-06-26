@@ -2,13 +2,13 @@
 
 using lingodb::runtime::Array;
 
-std::string Array::print(mlir::Type type) {
+std::string Array::print() {
     std::string result = "";
-    transform(result, this->metadata[0], this->metadata[1], this->metadata[2], 0, 1, type);
+    transform(result, this->metadata[0], this->metadata[1], this->metadata[2], 0, 1);
     return result;
 }
 
-void Array::transform(std::string &target, uint32_t elemOffset, uint32_t elemLength, uint32_t dimLength, uint32_t childNumber, uint32_t dimension, mlir::Type type) {
+void Array::transform(std::string &target, uint32_t elemOffset, uint32_t elemLength, uint32_t dimLength, uint32_t childNumber, uint32_t dimension) {
     // Reached last dimension
     if (dimension == this->numberDimensions) {
         target.append("{");
@@ -60,7 +60,7 @@ void Array::transform(std::string &target, uint32_t elemOffset, uint32_t elemLen
                 }
             }
             // Call function with its children array structure
-            transform(target, start[i], start[i+1], start[i+2], getChildNumber(start + i, dimension + 1), dimension + 1, type);
+            transform(target, start[i], start[i+1], start[i+2], getChildNumber(start + i, dimension + 1), dimension + 1);
             target.append(",");
 
             // Check if last element is null value

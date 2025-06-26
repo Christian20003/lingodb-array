@@ -1,6 +1,7 @@
 add_library(ArrayBasics 
     VarLen32.cpp
     Array.cpp
+    ArrayAppend.cpp
     ArrayCasts.cpp
     ArrayParsing.cpp
     ArrayPrint.cpp

@@ -36,3 +36,51 @@ size_t Array::getTypeSize(mlir::Type type) {
         throw std::runtime_error("Given type is not supported in arrays");
     }
 }
+
+const mlir::Type Array::getType() {
+    return this->type;
+}
+
+uint32_t Array::getDimension() {
+    return this->numberDimensions;
+}
+
+uint32_t Array::getNumberElements() {
+    return this->numberElements;
+}
+
+uint32_t Array::getTotalNumberElements() {
+    return this->metadata[1];
+}
+
+uint32_t Array::getMetadataLength() {
+    uint32_t result = 0;
+    for (size_t i = 0; i < this->numberDimensions; i++) {
+        result += this->metadataLengths[i];
+    }
+    return result;
+}
+
+uint32_t Array::getMetadataLength(uint32_t index) {
+    return this->metadataLengths[index];
+}
+
+uint32_t Array::getTotalStringLength() {
+    if (type != mlir::Type::STRING) {
+        return 0;
+    }
+    uint32_t result = 0;
+    uint32_t *stringLengths = reinterpret_cast<uint32_t*>(this->elements);
+    for (size_t i = 0; i < this->numberElements; i++) {
+        result += stringLengths[i];
+    }
+    return result;
+}
+
+const uint32_t* Array::getMetadata() {
+    return this->metadata;
+}
+
+const uint8_t* Array::getNulls() {
+    return this->nulls;
+}
