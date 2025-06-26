@@ -57,6 +57,15 @@ class Array {
  *##########################################################################################################################################################
  */    
 
+    /**
+     * This function copies the specified data into the provided target.
+     * 
+     * @param buffer        A reference to a char pointer which points to the string
+     *                      that should store the result.
+     * @param data          A pointer to the data that should be copied.
+     * @param size          The number of elements that should be copied from the given
+     *                      data pointer.
+     */
     template<class TYPE>
     static void writeToBuffer(char *&buffer, const TYPE *data, uint32_t size) {
         memcpy(buffer, data, sizeof(TYPE) * size);
@@ -194,14 +203,61 @@ class Array {
     uint32_t countNulls(uint32_t maxPosition);
 
     const mlir::Type getType();
+
+    /**
+     * This method returns the dimension value of this array.
+     */
     uint32_t getDimension();
+
+    /**
+     * This method returns the number of elements in this array without 
+     * NULL values.
+     */
     uint32_t getNumberElements();
+
+    /**
+     * This method returns the number of elements in this array including
+     * NULL values.
+     */
     uint32_t getTotalNumberElements();
+
+    /**
+     * This method returns the number of metadata entries in this array.
+     */
     uint32_t getMetadataLength();
+
+    /**
+     * This method returns the number of metadata entris of a specific
+     * dimension.
+     * 
+     * @param index     The selected dimension.
+     */
     uint32_t getMetadataLength(uint32_t index);
+
+    /**
+     * This method returns the total string length of all strings in
+     * this array. If the array type is not string, this method will return `0`. 
+     */
     uint32_t getTotalStringLength();
+
+    /**
+     * This method returns a pointer to the metadata entries.
+     */
     const uint32_t* getMetadata();
+
+    /**
+     * This method returns a pointer to the null bitstrings.
+     */
     const uint8_t* getNulls();
+
+    /**
+     * This method returns a pointer to the first metadata entry that
+     * belongs to the provided dimension.
+     * 
+     * @param dimension     The selected dimension.
+     * @throws              `std::runtime_error`: If the selected dimension is
+     *                      larger than the total number of dimensions.
+     */
     const uint32_t* getFirstElement(uint32_t dimension);
 
     /**
