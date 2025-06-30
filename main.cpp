@@ -14,7 +14,7 @@ int main() {
     VarLen32 var2 = VarLen32::fromString(string2);
     var2 = ArrayRuntime::fromString(var2, mlir::Type::STRING);
     
-    std::string string3 = "{{},{{1,2,3},{1,2,3},{1,2,3},{},{1,2,3},{1,2,3}},{{1,2,3},{1,2,3},{1,2,3},{1,2,3},{1,2,3},{1,2,3},{}}}";
+    std::string string3 = "{1,2,3}";
     VarLen32 var3 = VarLen32::fromString(string3);
     var3 = ArrayRuntime::fromString(var3, mlir::Type::INTEGER);
     

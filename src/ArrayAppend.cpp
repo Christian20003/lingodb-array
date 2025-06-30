@@ -49,12 +49,21 @@ lingodb::runtime::VarLen32 Array::append(Array &other) {
     // Add metadata lengths to the result
     // The number of entries will be the same as on the left
     uint32_t leftIdx = 0;
-    uint32_t rightIdx = 1;
+    uint32_t rightIdx = 0;
     for (size_t i = leftDimension; i > 0; i--) {
-        // The value will only change if a certain dimension level is reached
-        // The level that will get array structures from the right
-        if (other.getDimension() <= i) {
+        // Append right to next higher dimension on left (right will be new child)
+        if (rightDimension == i && rightDimension < leftDimension) {
+            uint32_t newLength = this->metadataLengths[leftIdx] + other.getMetadataLength(rightIdx);
+            writeToBuffer(buffer, &newLength, 1);
+            rightIdx++;
+        // Left and right have same dimension. Append all childs from right to left
+        } else if (rightDimension == i) {
             writeToBuffer(buffer, &this->metadataLengths[leftIdx], 1);
+            rightIdx++;
+        // Left has much more dimensions than right (Copy values from left)
+        } else if (rightDimension < i) {
+            writeToBuffer(buffer, &this->metadataLengths[leftIdx], 1);
+        // Otherwise copy new child metadata length values
         } else {
             uint32_t newLength = this->metadataLengths[leftIdx] + other.getMetadataLength(rightIdx);
             writeToBuffer(buffer, &newLength, 1);
@@ -66,13 +75,14 @@ lingodb::runtime::VarLen32 Array::append(Array &other) {
     // Add metadata entries to the result
     uint32_t leftMetadataIdx = 0;
     uint32_t rightMetadataIdx = 0;
+    bool onlyAppend = false;
     for (size_t i = leftDimension; i > 0; i--) {
         const uint32_t *leftMetadata = getFirstElement(leftMetadataIdx);
         const uint32_t *rightMetadata = other.getFirstElement(rightMetadataIdx);
         uint32_t leftMetadataLength = getMetadataLength(leftMetadataIdx);
         uint32_t rightMetadataLength = other.getMetadataLength(rightMetadataIdx);
         // Check if dimension level is reached to append array structures from right
-        if (rightDimension <= i) {
+        if (rightDimension <= i && !onlyAppend) {
             // Iterate over each metadata entry from left in current dimension
             for (size_t j = 0; j < leftMetadataLength * 3; j += 3) {
                 // Check if last entry is selected
@@ -81,8 +91,14 @@ lingodb::runtime::VarLen32 Array::append(Array &other) {
                     writeToBuffer(buffer, &leftMetadata[j], 1);
                     uint32_t newElemLength = leftMetadata[j+1] + rightMetadata[1];
                     writeToBuffer(buffer, &newElemLength, 1);
-                    // If in the same dimension level, also adjust its dimension length value
-                    if (rightDimension == i) {
+                    // If left has more dimensions than right, append rights entries as new childs to the 
+                    // next higher dimension of left
+                    if (rightDimension + 1 == i) {
+                        uint32_t newDimLength = leftMetadata[j+2] + 1;
+                        writeToBuffer(buffer, &newDimLength, 1);
+                        onlyAppend = true;
+                    // If in the same dimension level
+                    } else if (rightDimension == i) {
                         uint32_t newDimLength = leftMetadata[j+2] + rightMetadata[2];
                         writeToBuffer(buffer, &newDimLength, 1);
                         rightMetadataIdx++;
