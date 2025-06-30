@@ -20,3 +20,34 @@ lingodb::runtime::VarLen32 ArrayRuntime::append(
         Array rightArray(rightVal, rightType);
         return leftArray.append(rightArray);
 }
+
+lingodb::runtime::VarLen32 ArrayRuntime::append(lingodb::runtime::VarLen32 array, mlir::Type type, int32_t value) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.append(value);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::append(lingodb::runtime::VarLen32 array, mlir::Type type, int64_t value) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.append(value);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::append(lingodb::runtime::VarLen32 array, mlir::Type type, float value) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.append(value);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::append(lingodb::runtime::VarLen32 array, mlir::Type type, double value) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.append(value);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::append(lingodb::runtime::VarLen32 array, mlir::Type type, VarLen32 value) {
+    std::string arrayVal = array.str();
+    std::string valueVal = value.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.append(valueVal);
+}

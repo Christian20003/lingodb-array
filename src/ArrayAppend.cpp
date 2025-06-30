@@ -141,3 +141,79 @@ lingodb::runtime::VarLen32 Array::append(Array &other) {
 
     return VarLen32::fromString(result);
 }
+
+template<>
+lingodb::runtime::VarLen32 Array::appendElement(std::string value) {
+    std::string result = "";
+    size_t size = getStringSize(
+        this->numberDimensions, 
+        this->numberElements + 1,
+        getMetadataLength(),
+        countNullBytes(getTotalNumberElements() + 1),
+        getTotalStringLength() + value.size(),
+        type
+    );
+
+    result.resize(size);
+    char *buffer = result.data();
+    uint32_t numberElements = this->numberElements + 1;
+    writeToBuffer(buffer, &this->numberDimensions, 1);
+    writeToBuffer(buffer, &numberElements, 1);
+    writeToBuffer(buffer, this->metadataLengths, this->numberDimensions);
+    for (size_t i = 0; i < this->numberDimensions; i++) {
+        const uint32_t *metadata = getFirstElement(i);
+        uint32_t metadataLength = getMetadataLength(i);
+        uint32_t newLength = metadata[metadataLength * 3 - 2] + 1;
+        writeToBuffer(buffer, metadata, (metadataLength - 1) * 3);
+        writeToBuffer(buffer, &metadata[metadataLength * 3 - 3], 1);
+        writeToBuffer(buffer, &newLength, 1);
+        writeToBuffer(buffer, &metadata[metadataLength * 3 - 1], 1);
+    }
+    copyElements(buffer);
+    uint32_t stringSize = value.size();
+    writeToBuffer(buffer, &stringSize, 1);
+    writeToBuffer(buffer, this->nulls, countNullBytes(this->metadata[1]));
+
+    if (this->metadata[1] % 8 == 0) {
+        buffer++;
+    }
+    copyStrings(buffer);
+    writeToBuffer(buffer, value.data(), stringSize);
+
+    return VarLen32::fromString(result);
+};
+
+lingodb::runtime::VarLen32 Array::append(int32_t value) {
+    if (type != mlir::Type::INTEGER) {
+        throw std::runtime_error("Array-Append: Array elements are not of type integer (32-bit)");
+    }
+    return appendElement(value);
+}
+
+lingodb::runtime::VarLen32 Array::append(int64_t value) {
+    if (type != mlir::Type::BIGINTEGER) {
+        throw std::runtime_error("Array-Append: Array elements are not of type integer (64-bit)");
+    }
+    return appendElement(value);
+}
+
+lingodb::runtime::VarLen32 Array::append(float value) {
+    if (type != mlir::Type::FLOAT) {
+        throw std::runtime_error("Array-Append: Array elements are not of type float");
+    }
+    return appendElement(value);
+}
+
+lingodb::runtime::VarLen32 Array::append(double value) {
+    if (type != mlir::Type::DOUBLE) {
+        throw std::runtime_error("Array-Append: Array elements are not of type double");
+    }
+    return appendElement(value);
+}
+
+lingodb::runtime::VarLen32 Array::append(std::string &value) {
+    if (type != mlir::Type::STRING) {
+        throw std::runtime_error("Array-Append: Array elements are not of type string");
+    }
+    return appendElement(value);
+}

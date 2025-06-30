@@ -141,6 +141,48 @@ class Array {
     void appendStringValue(std::string &target, uint32_t position);
 
     /**
+     * This method appends a single element of type `TYPE` to the last array structure
+     * (lowest dimension). This method should only be used to append primitive elements.
+     * 
+     * @param value     The value which should be appended.
+     * 
+     * @returns         The extended array in array processable string format.
+     */
+    template<class TYPE>
+    VarLen32 appendElement(TYPE value) {
+        std::string result = "";
+        size_t size = getStringSize(
+            this->numberDimensions, 
+            this->numberElements + 1,
+            getMetadataLength(),
+            countNullBytes(getTotalNumberElements() + 1),
+            0,
+            type
+        );
+        result.resize(size);
+        char *buffer = result.data();
+
+        uint32_t numberElements = this->numberElements + 1;
+        writeToBuffer(buffer, &this->numberDimensions, 1);
+        writeToBuffer(buffer, &numberElements, 1);
+        writeToBuffer(buffer, this->metadataLengths, this->numberDimensions);
+        auto *test = reinterpret_cast<uint32_t *>(buffer);
+        for (size_t i = 0; i < this->numberDimensions; i++) {
+            const uint32_t *metadata = getFirstElement(i);
+            uint32_t metadataLength = getMetadataLength(i);
+            uint32_t newLength = metadata[metadataLength * 3 - 2] + 1;
+            writeToBuffer(buffer, metadata, (metadataLength - 1) * 3);
+            writeToBuffer(buffer, &metadata[metadataLength * 3 - 3], 1);
+            writeToBuffer(buffer, &newLength, 1);
+            writeToBuffer(buffer, &metadata[metadataLength * 3 - 1], 1);
+        }
+        copyElements(buffer);
+        writeToBuffer(buffer, &value, 1);
+        writeToBuffer(buffer, this->nulls, countNullBytes(this->metadata[1]));
+        return VarLen32::fromString(result);
+    };
+
+    /**
      * This method transforms the array into its string representation (for printing).
      * This method will be called recursively over each metadata entry.
      * 
@@ -260,6 +302,12 @@ class Array {
      */
     const uint32_t* getFirstElement(uint32_t dimension);
 
+/*
+ *##########################################################################################################################################################  
+ *                                                              APPEND METHODS
+ *##########################################################################################################################################################
+ */ 
+
     /**
      * This function appends the other array. Thereby a new array object will be
      * created returned as `VarLen32` object.
@@ -271,6 +319,61 @@ class Array {
      * @returns         The string in array processable format storing the extended array. 
      */
     VarLen32 append(Array &other);
+
+    /**
+     * This method appends a single integer value to the last array element in the lowest 
+     * dimension.
+     * 
+     * @param value     The value which should be appended.
+     * @throws          `std::runtime_error`: If the array does not store 32-bit integer values.
+     * 
+     * @returns         The extended array in array processable string format.
+     */
+    VarLen32 append(int32_t value);
+
+    /**
+     * This method appends a single integer value to the last array element in the lowest 
+     * dimension.
+     * 
+     * @param value     The value which should be appended.
+     * @throws          `std::runtime_error`: If the array does not store 64-bit integer values.
+     * 
+     * @returns         The extended array in array processable string format.
+     */
+    VarLen32 append(int64_t value);
+
+    /**
+     * This method appends a single float value to the last array element in the lowest 
+     * dimension.
+     * 
+     * @param value     The value which should be appended.
+     * @throws          `std::runtime_error`: If the array does not store float values.
+     * 
+     * @returns         The extended array in array processable string format.
+     */
+    VarLen32 append(float value);
+
+    /**
+     * This method appends a single double value to the last array element in the lowest 
+     * dimension.
+     * 
+     * @param value     The value which should be appended.
+     * @throws          `std::runtime_error`: If the array does not store double values.
+     * 
+     * @returns         The extended array in array processable string format.
+     */
+    VarLen32 append(double value);
+
+    /**
+     * This method appends a single string value to the last array element in the lowest 
+     * dimension.
+     * 
+     * @param value     The value which should be appended.
+     * @throws          `std::runtime_error`: If the array does not store string values.
+     * 
+     * @returns         The extended array in array processable string format.
+     */
+    VarLen32 append(std::string &value);
 
     std::string print();
 

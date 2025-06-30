@@ -18,7 +18,8 @@ int main() {
     VarLen32 var3 = VarLen32::fromString(string3);
     var3 = ArrayRuntime::fromString(var3, mlir::Type::INTEGER);
     
-    VarLen32 op = ArrayRuntime::append(var1, var3, mlir::Type::INTEGER, mlir::Type::INTEGER);
+    // VarLen32 op = ArrayRuntime::append(var1, var3, mlir::Type::INTEGER, mlir::Type::INTEGER);
+    VarLen32 op = ArrayRuntime::append(var1, mlir::Type::INTEGER, 4);
     std::string array = op.str();
     Array result(array, mlir::Type::INTEGER);
     std::cout << result.print() << std::endl;

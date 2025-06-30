@@ -7,6 +7,11 @@ namespace lingodb::runtime {
         static lingodb::runtime::VarLen32 fromString(lingodb::runtime::VarLen32 str, mlir::Type type);
 
         static VarLen32 append(VarLen32 left, VarLen32 right, mlir::Type leftType, mlir::Type rightType);
+        static VarLen32 append(VarLen32 array, mlir::Type type, int32_t value);
+        static VarLen32 append(VarLen32 array, mlir::Type type, int64_t value);
+        static VarLen32 append(VarLen32 array, mlir::Type type, float value);
+        static VarLen32 append(VarLen32 array, mlir::Type type, double value);
+        static VarLen32 append(VarLen32 array, mlir::Type type, VarLen32 value);
 
     };
 
