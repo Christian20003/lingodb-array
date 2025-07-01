@@ -1,11 +1,14 @@
 add_library(ArrayBasics 
     VarLen32.cpp
     Array.cpp
-    ArrayAppend.cpp
-    ArrayCasts.cpp
-    ArrayParsing.cpp
-    ArrayPrint.cpp
+    ArrayElementHandling.cpp
+    ArrayMetadataHandling.cpp
+    ArrayNullHandling.cpp
     ArrayGetter.cpp
-    ArrayHelper.cpp
+    ArrayParsing.cpp
+    ArrayAppend.cpp
+    ArraySlice.cpp
+    ArrayPrint.cpp
+    ArrayEmpty.cpp
     ArrayRuntime.cpp
 )

@@ -6,7 +6,7 @@ using lingodb::runtime::VarLen32;
 using lingodb::runtime::ArrayRuntime;
 
 int main() {
-    std::string string1 = "{{{{1,2,3},{4,5,6}},{{9},{10,11,12}}},{{},null},{{{13,14,15},{16,18}},{{19,20,21},{22,23,24,37}}}}";
+    std::string string1 = "{{{{1,2,3},{4,5,6}},{{9},{10,11,12}}},{{},{}},{{{13,14,15},{16,18}},{{19,20,21},{22,23,24,37}}}}";
     VarLen32 var1 = VarLen32::fromString(string1);
     var1 = ArrayRuntime::fromString(var1, mlir::Type::INTEGER);
     
@@ -19,7 +19,8 @@ int main() {
     var3 = ArrayRuntime::fromString(var3, mlir::Type::INTEGER);
     
     // VarLen32 op = ArrayRuntime::append(var1, var3, mlir::Type::INTEGER, mlir::Type::INTEGER);
-    VarLen32 op = ArrayRuntime::append(var1, mlir::Type::INTEGER, 4);
+    // VarLen32 op = ArrayRuntime::append(var1, mlir::Type::INTEGER, 4);
+    VarLen32 op = ArrayRuntime::slice(var1, mlir::Type::INTEGER, 1, 2, 3);
     std::string array = op.str();
     Array result(array, mlir::Type::INTEGER);
     std::cout << result.print() << std::endl;

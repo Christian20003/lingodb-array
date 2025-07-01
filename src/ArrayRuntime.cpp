@@ -51,3 +51,9 @@ lingodb::runtime::VarLen32 ArrayRuntime::append(lingodb::runtime::VarLen32 array
     Array arrayObj(arrayVal, type);
     return arrayObj.append(valueVal);
 }
+
+lingodb::runtime::VarLen32 ArrayRuntime::slice(lingodb::runtime::VarLen32 array, mlir::Type type, int32_t lowerBound, int32_t upperBound, int32_t dimension) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.slice(lowerBound, upperBound, dimension);
+}

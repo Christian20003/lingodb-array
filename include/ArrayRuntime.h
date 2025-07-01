@@ -13,6 +13,8 @@ namespace lingodb::runtime {
         static VarLen32 append(VarLen32 array, mlir::Type type, double value);
         static VarLen32 append(VarLen32 array, mlir::Type type, VarLen32 value);
 
+        static VarLen32 slice(VarLen32 array, mlir::Type type, int32_t lowerBound, int32_t upperBound, int32_t dimension);
+
     };
 
 }

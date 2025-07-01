@@ -2,6 +2,51 @@
 
 using lingodb::runtime::Array;
 
+void Array::copyElements(char *&buffer) {
+    if (type == mlir::Type::INTEGER) {
+        writeToBuffer(buffer, reinterpret_cast<int32_t*>(this->elements), this->numberElements);
+    } else if (type == mlir::Type::BIGINTEGER) {
+        writeToBuffer(buffer, reinterpret_cast<int64_t*>(this->elements), this->numberElements);
+    } else if (type == mlir::Type::FLOAT) {
+        writeToBuffer(buffer, reinterpret_cast<float*>(this->elements), this->numberElements);
+    } else if (type == mlir::Type::DOUBLE) {
+        writeToBuffer(buffer, reinterpret_cast<double*>(this->elements), this->numberElements);
+    } else if (type == mlir::Type::STRING) {
+        writeToBuffer(buffer, reinterpret_cast<uint32_t*>(this->elements), this->numberElements);
+    } else {
+        throw std::runtime_error("Given type is not supported in arrays");
+    }
+}
+
+void Array::copyElement(char *&buffer, uint32_t position) {
+    if (type == mlir::Type::INTEGER) {
+        int32_t *value = reinterpret_cast<int32_t*>(this->elements) + position;
+        writeToBuffer(buffer, value, 1);
+    } else if (type == mlir::Type::BIGINTEGER) {
+        int64_t *value = reinterpret_cast<int64_t*>(this->elements) + position;
+        writeToBuffer(buffer, value, 1);
+    } else if (type == mlir::Type::FLOAT) {
+        float *value = reinterpret_cast<float*>(this->elements) + position;
+        writeToBuffer(buffer, value, 1);
+    } else if (type == mlir::Type::DOUBLE) {
+        double *value = reinterpret_cast<double*>(this->elements) + position;
+        writeToBuffer(buffer, value, 1);
+    } else if (type == mlir::Type::STRING) {
+        uint32_t *value = reinterpret_cast<uint32_t*>(this->elements) + position;
+        writeToBuffer(buffer, value, 1);
+    } else {
+        throw std::runtime_error("Given type is not supported in arrays");
+    }
+}
+
+void Array::copyStrings(char *&buffer) {
+    if (type != mlir::Type::STRING) {
+        return;
+    }
+    size_t size = getTotalStringLength();
+    writeToBuffer(buffer, this->strings, size);
+}
+
 template<>
 void Array::castElement<int32_t>(std::string &value, char *&writer) {
     try {
@@ -54,24 +99,27 @@ void Array::castElement<double>(std::string &value, char *&writer) {
     }
 }
 
-void Array::castNulls(std::vector<bool> &nulls, char *&writer) {
-    for (size_t i = 0; i < nulls.size(); i++) {
-        if (i != 0 && i % 8 == 0) {
-            writer += 1;
-        }
-        if (nulls[i]) {
-            uint8_t index = i % 8;
-            uint8_t shift = 8 - index - 1;
-            *writer |= (1 << shift);
-        }
-    }
-    writer += 1;
-}
-
 template<>
 void Array::castElement<std::string>(std::string &value, char *&writer) {
     memcpy(writer, &value, value.size());
     writer += value.size();
+}
+
+void Array::appendStringValue(std::string &target, uint32_t position) {
+    auto *stringLengths = reinterpret_cast<uint32_t*>(this->elements);
+    size_t prevLength = 0;
+
+    for (size_t i = 0; i < (size_t) position; i++) {
+        prevLength += stringLengths[i];
+    }
+    std::string value = std::string(this->strings + prevLength, stringLengths[position]);
+    target.append("\"");
+    target.append(value);
+    target.append("\"");
+}
+
+uint32_t Array::getElementPosition(uint32_t position) {
+    return position - countNulls(position);
 }
 
 template<>

@@ -121,6 +121,17 @@ class Array {
     uint32_t getChildNumber(const uint32_t *element, uint32_t dimension);
     uint32_t getElementPosition(uint32_t position);
 
+    uint32_t metadataSlice(
+        std::vector<uint32_t> &metadata, 
+        std::vector<uint32_t> &lengths, 
+        std::vector<uint32_t> &elements, 
+        uint32_t lowerBound, 
+        uint32_t upperBound, 
+        uint32_t sliceDimension, 
+        uint32_t dimension, 
+        uint32_t offset, 
+        const uint32_t *&entry);
+
     /**
      * This method casts an element at the given position to a string.
      * 
@@ -231,7 +242,10 @@ class Array {
     static void fromString(std::string &source, std::string &target, mlir::Type type);
     static uint32_t countNullBytes(uint32_t numberElements);
 
+    static VarLen32 createEmptyArray(mlir::Type type);
+
     void copyElements(char *&buffer);
+    void copyElement(char *&buffer, uint32_t position);
     void copyStrings(char *&buffer);
     void appendNulls(char *&buffer, const uint8_t *nulls, uint32_t numberElements, uint32_t startNumber);
 
@@ -374,6 +388,8 @@ class Array {
      * @returns         The extended array in array processable string format.
      */
     VarLen32 append(std::string &value);
+
+    VarLen32 slice(uint32_t lowerBound, uint32_t upperBound, uint32_t dimension);
 
     std::string print();
 
