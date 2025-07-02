@@ -247,6 +247,7 @@ class Array {
     void copyElements(char *&buffer);
     void copyElement(char *&buffer, uint32_t position);
     void copyStrings(char *&buffer);
+    void copyString(char *&buffer, uint32_t position);
     void copyNulls(char *&buffer, const uint8_t *nulls, uint32_t numberElements, uint32_t position);
 
     /**
@@ -294,7 +295,9 @@ class Array {
      * This method returns the total string length of all strings in
      * this array. If the array type is not string, this method will return `0`. 
      */
-    uint32_t getTotalStringLength();
+    uint32_t getStringLength();
+
+    uint32_t getStringLength(uint32_t position);
 
     /**
      * This method returns a pointer to the metadata entries.

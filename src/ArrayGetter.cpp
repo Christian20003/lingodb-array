@@ -65,7 +65,7 @@ uint32_t Array::getMetadataLength(uint32_t dimension) {
     return this->metadataLengths[dimension-1];
 }
 
-uint32_t Array::getTotalStringLength() {
+uint32_t Array::getStringLength() {
     if (type != mlir::Type::STRING) {
         return 0;
     }
@@ -75,6 +75,17 @@ uint32_t Array::getTotalStringLength() {
         result += stringLengths[i];
     }
     return result;
+}
+
+uint32_t Array::getStringLength(uint32_t position) {
+    if (this->numberElements <= position) {
+        throw std::runtime_error("Array-Element position does not exist");
+    }
+    if (type != mlir::Type::STRING) {
+        return 0;
+    }
+    uint32_t *stringLengths = reinterpret_cast<uint32_t*>(this->elements);
+    return stringLengths[position];
 }
 
 const uint32_t* Array::getMetadata() {

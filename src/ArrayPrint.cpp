@@ -65,7 +65,7 @@ void Array::transform(std::string &target, const uint32_t *entry, uint32_t dimen
 
             // Check if last element is null value
             if (i + 3 == entry[2] * 3) {
-                if (start[i] + start[i+1] < entry[0] + entry[0] && checkNull(entry[0] + entry[1] - 1)) {
+                if (start[i] + start[i+1] < entry[0] + entry[1] && checkNull(entry[0] + entry[1] - 1)) {
                     target.append("null");
                     target.append(",");
                 }

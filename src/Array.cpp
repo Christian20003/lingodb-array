@@ -22,6 +22,7 @@ Array::Array(std::string &array, mlir::Type type) {
     this->strings = data;
     this->type = type;
     if (type == mlir::Type::INTEGER) {
+        auto *test = reinterpret_cast<int32_t*>(elements);
         printData();
     }
 }

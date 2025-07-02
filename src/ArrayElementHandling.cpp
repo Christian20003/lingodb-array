@@ -43,8 +43,17 @@ void Array::copyStrings(char *&buffer) {
     if (type != mlir::Type::STRING) {
         return;
     }
-    size_t size = getTotalStringLength();
+    size_t size = getStringLength();
     writeToBuffer(buffer, this->strings, size);
+}
+
+void Array::copyString(char *&buffer, uint32_t position) {
+    uint32_t *sizes = reinterpret_cast<uint32_t*>(this->elements);
+    uint32_t offset = 0;
+    for (size_t i = 0; i < position; i++) {
+        offset += sizes[i];
+    }
+    writeToBuffer(buffer, this->strings + offset, sizes[position]);
 }
 
 template<>

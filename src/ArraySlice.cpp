@@ -19,23 +19,24 @@ lingodb::runtime::VarLen32 Array::slice(uint32_t lowerBound, uint32_t upperBound
     const auto *start = this->metadata;
     auto totalElements = metadataSlice(metadata, metadataLengths, elementIdx, lowerBound-1, upperBound-1, dimension, 1, 0, start);
     metadata[1] = totalElements;
-    metadata[2] = metadataLengths[1];
+    metadata[2] = metadataLengths.size() > 1 ? metadataLengths[1] : 0;
 
     for (auto &entry : elementIdx) {
         if (checkNull(entry)) {
             nulls.push_back(true);
         } else {
             if (type == mlir::Type::STRING) {
-                stringLengths += entry;
+                stringLengths += getStringLength(getElementPosition(entry));
             }
             nulls.push_back(false);
         }
     }
 
     std::string result;
+    uint32_t numberElements = totalElements - std::count(nulls.begin(), nulls.end(), true);
     size_t size = getStringSize(
         this->numberDimensions,
-        totalElements - std::count(nulls.begin(), nulls.end(), true),
+        numberElements,
         metadata.size() / 3,
         countNullBytes(totalElements),
         stringLengths,
@@ -45,22 +46,23 @@ lingodb::runtime::VarLen32 Array::slice(uint32_t lowerBound, uint32_t upperBound
     char *buffer = result.data();
 
     writeToBuffer(buffer, &this->numberDimensions, 1);
-    writeToBuffer(buffer, &totalElements, 1);
+    writeToBuffer(buffer, &numberElements, 1);
     writeToBuffer(buffer, metadataLengths.data(), this->numberDimensions);
     writeToBuffer(buffer, metadata.data(), metadata.size());
 
     for (auto &entry : elementIdx) {
-        copyElement(buffer, entry);
+        if (!checkNull(entry)) {
+            copyElement(buffer, getElementPosition(entry));
+        }
     }
     castNulls(nulls, buffer);
 
     if (type == mlir::Type::STRING) {
-        char *values = this->strings;
-        uint32_t *sizes = reinterpret_cast<uint32_t*>(this->elements);
         size_t idx = 0;
         for (size_t i = 0; i < getTotalNumberElements(); i++) {
             if (i == elementIdx[idx] && !checkNull(i)) {
-                writeToBuffer(buffer, values, sizes[getElementPosition(i)]);
+                copyString(buffer, getElementPosition(i));
+                idx++;
             }
         }
     }
@@ -80,12 +82,12 @@ uint32_t Array::metadataSlice(
 
     uint32_t result = 0;
     if (dimension == this->numberDimensions) {
-        for (uint32_t i = entry[0]; i < entry[0] + entry[1]; i++) {
+        for (uint32_t i = 0; i < entry[1]; i++) {
             if (dimension == sliceDimension && (i < lowerBound || i > upperBound)) {
                 continue;
             }
             result++;
-            elements.push_back(i);
+            elements.push_back(i + entry[0]);
         }
         return result;
     }
@@ -111,14 +113,15 @@ uint32_t Array::metadataSlice(
         metadata.insert(metadata.begin() + insertPos, newOffset);
         metadata.insert(metadata.begin() + insertPos+1, 0);
         metadata.insert(metadata.begin() + insertPos+2, 0);
-        if (dimension == sliceDimension && (subEntry[i+2] < lowerBound || subEntry[i+2] < upperBound)) {
+        /* if (dimension == sliceDimension && (subEntry[i+2] < lowerBound || subEntry[i+2] < upperBound)) {
             insertPos += 3;
             continue;
-        }
+        } */
         auto dimChange = lengths.size() < dimension + 1 ? 0 : lengths[dimension+1];
         auto *child = subEntry + i;
         auto elemLength = metadataSlice(metadata, lengths, elements, lowerBound, upperBound, sliceDimension, dimension + 1, newOffset, child);
-        if (elemLength == 0 && subEntry[i+1] == 1) {
+        if (elemLength == 0 && subEntry[i+1] == 1 && dimension >= sliceDimension) {
+            elements.push_back(subEntry[i]);
             elemLength++;
         }
         metadata[insertPos + 1] = elemLength;
