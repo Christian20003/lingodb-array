@@ -20,7 +20,7 @@ int main() {
     
     // VarLen32 op = ArrayRuntime::append(var1, var3, mlir::Type::INTEGER, mlir::Type::INTEGER);
     // VarLen32 op = ArrayRuntime::append(var1, mlir::Type::INTEGER, 4);
-    VarLen32 op = ArrayRuntime::slice(var3, mlir::Type::INTEGER, 2, 2, 1);
+    VarLen32 op = ArrayRuntime::slice(var1, mlir::Type::INTEGER, 1, 2, 1);
     std::string array = op.str();
     Array result(array, mlir::Type::INTEGER);
     std::cout << result.print() << std::endl;

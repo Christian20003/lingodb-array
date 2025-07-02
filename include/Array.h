@@ -492,6 +492,8 @@ class Array {
      */
     VarLen32 slice(uint32_t lowerBound, uint32_t upperBound, uint32_t dimension);
 
+    VarLen32 operator[](uint32_t position);
+
     std::string print();
 
 };
