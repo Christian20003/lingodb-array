@@ -90,7 +90,7 @@ uint32_t Array::metadataSlice(
         return result;
     }
 
-    auto *subEntry = getFirstChild(dimension, getChildNumber(entry, dimension));
+    auto *subEntry = getChildEntry(entry, dimension);
     auto insertPos = 0;
     for (size_t i = 0; i < dimension + 1; i++) {
         if (lengths.size() > i) {

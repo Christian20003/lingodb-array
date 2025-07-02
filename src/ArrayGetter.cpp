@@ -61,8 +61,8 @@ uint32_t Array::getMetadataLength() {
     return result;
 }
 
-uint32_t Array::getMetadataLength(uint32_t index) {
-    return this->metadataLengths[index];
+uint32_t Array::getMetadataLength(uint32_t dimension) {
+    return this->metadataLengths[dimension-1];
 }
 
 uint32_t Array::getTotalStringLength() {

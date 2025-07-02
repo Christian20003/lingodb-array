@@ -16,21 +16,25 @@ void Array::castNulls(std::vector<bool> &nulls, char *&writer) {
     writer += 1;
 }
 
-void Array::appendNulls(char *&buffer, const uint8_t *nulls, uint32_t numberElements, uint32_t startNumber) {
+void Array::copyNulls(char *&buffer, const uint8_t *nulls, uint32_t numberElements, uint32_t position) {
+    if (position == 0) {
+        writeToBuffer(buffer, nulls, countNullBytes(numberElements));
+        return;
+    }
     for (size_t i = 0; i < numberElements; i++) {
         if (i != 0 && i % 8 == 0) {
             nulls++;
         }
         uint8_t index = i % 8;
         uint8_t shift = 8 - index - 1;
-        bool isNull = nulls[0] >> shift;
+        bool isNull = nulls[0] >> shift & 1;
         if (isNull) {
-            uint8_t newIndex = startNumber % 8;
+            uint8_t newIndex = position % 8;
             uint8_t newShift = 8 - newIndex - 1;
             *buffer |= (1 << newShift);
         }
-        startNumber++;
-        if (startNumber % 8 == 0) {
+        position++;
+        if (position % 8 == 0) {
             buffer++;
         }
     }

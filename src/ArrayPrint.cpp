@@ -4,18 +4,18 @@ using lingodb::runtime::Array;
 
 std::string Array::print() {
     std::string result = "";
-    transform(result, this->metadata[0], this->metadata[1], this->metadata[2], 0, 1);
+    transform(result, this->metadata, 1);
     return result;
 }
 
-void Array::transform(std::string &target, uint32_t elemOffset, uint32_t elemLength, uint32_t dimLength, uint32_t childNumber, uint32_t dimension) {
+void Array::transform(std::string &target, const uint32_t *entry, uint32_t dimension) {
     // Reached last dimension
     if (dimension == this->numberDimensions) {
         target.append("{");
         // Proof if array element is empty
-        if (elemLength != 0) {
+        if (entry[1] != 0) {
             // Iterate over each element and add it to result
-            for (size_t i = elemOffset; i < elemOffset + elemLength; i++) {
+            for (size_t i = entry[0]; i < entry[0] + entry[1]; i++) {
                 if (checkNull(i)) {
                     target.append("null");
                 } else {
@@ -31,7 +31,7 @@ void Array::transform(std::string &target, uint32_t elemOffset, uint32_t elemLen
                         appendStringValue(target, getElementPosition(i));
                     }
                 }
-                if (i + 1 != elemOffset + elemLength) {
+                if (i + 1 != entry[0] + entry[1]) {
                     target.append(",");
                 }
             }
@@ -40,15 +40,15 @@ void Array::transform(std::string &target, uint32_t elemOffset, uint32_t elemLen
         return;
     }
     // Get a pointer to the first metadata entry which belongs to the next lower dimension
-    auto *start = getFirstChild(dimension, childNumber);
+    auto *start = getChildEntry(entry, dimension);
     target.append("{");
     // Check if current metadata entry has elements
-    if (dimLength != 0) {
+    if (entry[2] != 0) {
         // Iterate over each metadata entry belonging to the caller structure.
-        for (size_t i = 0; i < dimLength * 3; i += 3) {
+        for (size_t i = 0; i < entry[2] * 3; i += 3) {
             // Check if first element is a null value
             if (i == 0) {
-                if(start[i] != elemOffset && checkNull(elemOffset)) {
+                if(start[i] != entry[0] && checkNull(entry[0])) {
                     target.append("null");
                     target.append(",");
                 }
@@ -60,24 +60,24 @@ void Array::transform(std::string &target, uint32_t elemOffset, uint32_t elemLen
                 }
             }
             // Call function with its children array structure
-            transform(target, start[i], start[i+1], start[i+2], getChildNumber(start + i, dimension + 1), dimension + 1);
+            transform(target, start + i, dimension + 1);
             target.append(",");
 
             // Check if last element is null value
-            if (i + 3 == dimLength * 3) {
-                if (start[i] + start[i+1] < elemOffset + elemLength && checkNull(elemOffset + elemLength - 1)) {
+            if (i + 3 == entry[2] * 3) {
+                if (start[i] + start[i+1] < entry[0] + entry[0] && checkNull(entry[0] + entry[1] - 1)) {
                     target.append("null");
                     target.append(",");
                 }
             }
         }
     // Check if there is a null value 
-    } else if (dimLength == 0 && elemLength == 1) {
-        if (checkNull(elemOffset)) {
+    } else if (entry[2] == 0 && entry[1] == 1) {
+        if (checkNull(entry[0])) {
             target.append("null");
         }
     }
-    if (dimLength != 0) {
+    if (entry[2] != 0) {
         target.erase(target.length() - 1);
     }
     target.append("}");

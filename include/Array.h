@@ -73,6 +73,7 @@ class Array {
     };
 
     void printData();
+    void printNulls();
 
     /**
      * This function casts a string into a value of the corresponding type `TYPE` and
@@ -117,7 +118,6 @@ class Array {
      */
     static size_t getTypeSize(mlir::Type type);
 
-    const uint32_t *getFirstChild(uint32_t dimension, uint32_t childNumber);
     uint32_t getChildNumber(const uint32_t *element, uint32_t dimension);
     uint32_t getElementPosition(uint32_t position);
 
@@ -178,8 +178,8 @@ class Array {
         writeToBuffer(buffer, &numberElements, 1);
         writeToBuffer(buffer, this->metadataLengths, this->numberDimensions);
         auto *test = reinterpret_cast<uint32_t *>(buffer);
-        for (size_t i = 0; i < this->numberDimensions; i++) {
-            const uint32_t *metadata = getFirstElement(i);
+        for (size_t i = 1; i <= this->numberDimensions; i++) {
+            const uint32_t *metadata = getFirstEntry(i);
             uint32_t metadataLength = getMetadataLength(i);
             uint32_t newLength = metadata[metadataLength * 3 - 2] + 1;
             writeToBuffer(buffer, metadata, (metadataLength - 1) * 3);
@@ -209,7 +209,7 @@ class Array {
      * @throws              `std::runtime_error`: If the provided array structure is
      *                      not valid (processable).
      */
-    void transform(std::string &target, uint32_t elemOffset, uint32_t elemLength, uint32_t dimLength, uint32_t childNumber, uint32_t dimension);
+    void transform(std::string &target, const uint32_t *entry, uint32_t dimension);
 
     /**
      * This method proofs if at the given position is a NULL value.
@@ -247,7 +247,7 @@ class Array {
     void copyElements(char *&buffer);
     void copyElement(char *&buffer, uint32_t position);
     void copyStrings(char *&buffer);
-    void appendNulls(char *&buffer, const uint8_t *nulls, uint32_t numberElements, uint32_t startNumber);
+    void copyNulls(char *&buffer, const uint8_t *nulls, uint32_t numberElements, uint32_t position);
 
     /**
      * This function counts the number of NULL values till the given position.
@@ -286,9 +286,9 @@ class Array {
      * This method returns the number of metadata entris of a specific
      * dimension.
      * 
-     * @param index     The selected dimension.
+     * @param dimension     The selected dimension.
      */
-    uint32_t getMetadataLength(uint32_t index);
+    uint32_t getMetadataLength(uint32_t dimension);
 
     /**
      * This method returns the total string length of all strings in
@@ -308,13 +308,29 @@ class Array {
 
     /**
      * This method returns a pointer to the first metadata entry that
-     * belongs to the provided dimension.
+     * belongs to the provided dimension (Index of first dimension is
+     * 1).
      * 
      * @param dimension     The selected dimension.
      * @throws              `std::runtime_error`: If the selected dimension is
      *                      larger than the total number of dimensions.
      */
-    const uint32_t* getFirstElement(uint32_t dimension);
+    const uint32_t* getFirstEntry(uint32_t dimension);
+
+    /**
+     * This method returns a pointer to the first metadata entry that
+     * belongs as child to the given metadata entry.
+     * 
+     * @param entry         The metadata entry.
+     * @param dimension     The dimension of the given metadata entry.
+     * @throws              `std::runtime_error`: If the selected dimension
+     *                      is larger than the total number of dimensions.
+     * 
+     * @returns             A pointer to the first child metadata entry. If
+     *                      not any child could be found it will return a 
+     *                      `nullptr`.
+     */
+    const uint32_t* getChildEntry(const uint32_t *entry, uint32_t dimension);
 
 /*
  *##########################################################################################################################################################  

@@ -48,24 +48,25 @@ lingodb::runtime::VarLen32 Array::append(Array &other) {
 
     // Add metadata lengths to the result
     // The number of entries will be the same as on the left
-    uint32_t leftIdx = 0;
-    uint32_t rightIdx = 0;
+    uint32_t leftIdx = 1;
+    uint32_t rightIdx = 1;
     for (size_t i = leftDimension; i > 0; i--) {
         // Append right to next higher dimension on left (right will be new child)
+        uint32_t newLength = getMetadataLength(leftIdx);
         if (rightDimension == i && rightDimension < leftDimension) {
-            uint32_t newLength = this->metadataLengths[leftIdx] + other.getMetadataLength(rightIdx);
+            newLength += other.getMetadataLength(rightIdx);
             writeToBuffer(buffer, &newLength, 1);
             rightIdx++;
         // Left and right have same dimension. Append all childs from right to left
         } else if (rightDimension == i) {
-            writeToBuffer(buffer, &this->metadataLengths[leftIdx], 1);
+            writeToBuffer(buffer, &newLength, 1);
             rightIdx++;
         // Left has much more dimensions than right (Copy values from left)
         } else if (rightDimension < i) {
-            writeToBuffer(buffer, &this->metadataLengths[leftIdx], 1);
+            writeToBuffer(buffer, &newLength, 1);
         // Otherwise copy new child metadata length values
         } else {
-            uint32_t newLength = this->metadataLengths[leftIdx] + other.getMetadataLength(rightIdx);
+            newLength += other.getMetadataLength(rightIdx);
             writeToBuffer(buffer, &newLength, 1);
             rightIdx++;
         }
@@ -73,12 +74,12 @@ lingodb::runtime::VarLen32 Array::append(Array &other) {
     }
 
     // Add metadata entries to the result
-    uint32_t leftMetadataIdx = 0;
-    uint32_t rightMetadataIdx = 0;
+    uint32_t leftMetadataIdx = 1;
+    uint32_t rightMetadataIdx = 1;
     bool onlyAppend = false;
     for (size_t i = leftDimension; i > 0; i--) {
-        const uint32_t *leftMetadata = getFirstElement(leftMetadataIdx);
-        const uint32_t *rightMetadata = other.getFirstElement(rightMetadataIdx);
+        const uint32_t *leftMetadata = getFirstEntry(leftMetadataIdx);
+        const uint32_t *rightMetadata = other.getFirstEntry(rightMetadataIdx);
         uint32_t leftMetadataLength = getMetadataLength(leftMetadataIdx);
         uint32_t rightMetadataLength = other.getMetadataLength(rightMetadataIdx);
         // Check if dimension level is reached to append array structures from right
@@ -112,9 +113,10 @@ lingodb::runtime::VarLen32 Array::append(Array &other) {
         } else {
             // Copy metadata entries from left and right
             // But also adjust element offset of each metadata entry from right
-            uint32_t newOffset = leftMetadata[(leftMetadataLength - 1) * 3] + leftMetadata[(leftMetadataLength - 1) * 3 + 1];
+            uint32_t leftElements = leftMetadata[(leftMetadataLength - 1) * 3] + leftMetadata[(leftMetadataLength - 1) * 3 + 1];
             writeToBuffer<uint32_t>(buffer, &leftMetadata[0], leftMetadataLength * 3);
             for (size_t j = 0; j < rightMetadataLength * 3; j += 3) {
+                uint32_t newOffset = rightMetadata[j] + leftElements;
                 writeToBuffer(buffer, &newOffset, 1);
                 writeToBuffer(buffer, &rightMetadata[j+1], 2);
                 newOffset += rightMetadata[j+1];
@@ -128,12 +130,12 @@ lingodb::runtime::VarLen32 Array::append(Array &other) {
     other.copyElements(buffer);
 
     // Add null values to result
-    writeToBuffer(buffer, this->nulls, countNullBytes(this->metadata[1]));
+    copyNulls(buffer, this->nulls, leftTotalElements, 0);
     // Step one char back if some bits in last byte not used 
-    if (getTotalNumberElements() % 8 != 0) {
+    if (leftTotalElements % 8 != 0) {
         buffer -= 1;
     } 
-    appendNulls(buffer, other.getNulls(), other.getTotalNumberElements(), this->metadata[1]);
+    copyNulls(buffer, other.getNulls(), rightTotalElements, leftTotalElements);
 
     // Add string values to result
     copyStrings(buffer);
@@ -160,8 +162,8 @@ lingodb::runtime::VarLen32 Array::appendElement(std::string value) {
     writeToBuffer(buffer, &this->numberDimensions, 1);
     writeToBuffer(buffer, &numberElements, 1);
     writeToBuffer(buffer, this->metadataLengths, this->numberDimensions);
-    for (size_t i = 0; i < this->numberDimensions; i++) {
-        const uint32_t *metadata = getFirstElement(i);
+    for (size_t i = 1; i <= this->numberDimensions; i++) {
+        const uint32_t *metadata = getFirstEntry(i);
         uint32_t metadataLength = getMetadataLength(i);
         uint32_t newLength = metadata[metadataLength * 3 - 2] + 1;
         writeToBuffer(buffer, metadata, (metadataLength - 1) * 3);

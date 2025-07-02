@@ -28,13 +28,24 @@ Array::Array(std::string &array, mlir::Type type) {
 
 void Array::printData() {
     size_t metadataLen = 0;
+    std::cout << "METADATA-LENGTHS:" << std::endl;
     for (size_t i = 0; i < this->numberDimensions; i++) {
         std::cout << this->metadataLengths[i] << ",";
         metadataLen += this->metadataLengths[i];
     }
     std::cout << std::endl;
+    std::cout << "METADATA-ENTRIES:" << std::endl;
     for (size_t i = 0; i < metadataLen * 3; i += 3) {
         std::cout << "{" << this->metadata[i] << ":" <<this->metadata[i+1] << ":" << this->metadata[i+2] << "},"; 
+    }
+    std::cout << std::endl;
+    printNulls();
+}
+
+void Array::printNulls() {
+    std::cout << "NULLS:" << std::endl;
+    for (size_t i = 0; i < getTotalNumberElements(); i++) {
+        std::cout << checkNull(i) << ",";
     }
     std::cout << std::endl;
 }
