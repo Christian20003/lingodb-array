@@ -49,6 +49,9 @@ bool Array::checkNull(uint32_t position) {
 }
 
 uint32_t Array::countNulls(uint32_t maxPosition) {
+    if (this->metadata[1] <= maxPosition) {
+        throw std::runtime_error("Array-Element does not exist");
+    }
     uint32_t result = 0;
     for (size_t i = 0; i < maxPosition; i++) {
         if (checkNull(i)) {

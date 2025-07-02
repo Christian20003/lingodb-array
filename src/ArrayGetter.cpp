@@ -45,12 +45,11 @@ uint32_t Array::getDimension() {
     return this->numberDimensions;
 }
 
-uint32_t Array::getNumberElements() {
+uint32_t Array::getNumberElements(bool withNulls) {
+    if (withNulls) {
+        return this->metadata[1];
+    }
     return this->numberElements;
-}
-
-uint32_t Array::getTotalNumberElements() {
-    return this->metadata[1];
 }
 
 uint32_t Array::getMetadataLength() {
@@ -62,6 +61,9 @@ uint32_t Array::getMetadataLength() {
 }
 
 uint32_t Array::getMetadataLength(uint32_t dimension) {
+    if (dimension > this->numberDimensions || dimension == 0) {
+        throw std::runtime_error("Array-Dimension does not exist");
+    }
     return this->metadataLengths[dimension-1];
 }
 

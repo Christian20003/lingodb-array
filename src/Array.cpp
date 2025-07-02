@@ -45,7 +45,7 @@ void Array::printData() {
 
 void Array::printNulls() {
     std::cout << "NULLS:" << std::endl;
-    for (size_t i = 0; i < getTotalNumberElements(); i++) {
+    for (size_t i = 0; i < getNumberElements(true); i++) {
         std::cout << checkNull(i) << ",";
     }
     std::cout << std::endl;

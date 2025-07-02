@@ -19,6 +19,9 @@ void Array::copyElements(char *&buffer) {
 }
 
 void Array::copyElement(char *&buffer, uint32_t position) {
+    if (this->numberElements <= position) {
+        throw std::runtime_error("Array-Element does not exist");
+    }
     if (type == mlir::Type::INTEGER) {
         int32_t *value = reinterpret_cast<int32_t*>(this->elements) + position;
         writeToBuffer(buffer, value, 1);
@@ -48,6 +51,9 @@ void Array::copyStrings(char *&buffer) {
 }
 
 void Array::copyString(char *&buffer, uint32_t position) {
+    if (this->numberElements <= position) {
+        throw std::runtime_error("Array-Element does not exist");
+    }
     uint32_t *sizes = reinterpret_cast<uint32_t*>(this->elements);
     uint32_t offset = 0;
     for (size_t i = 0; i < position; i++) {
@@ -63,7 +69,7 @@ void Array::castElement<int32_t>(std::string &value, char *&writer) {
         memcpy(writer, &castValue, sizeof(int32_t));
         writer += sizeof(int32_t);
     } catch (std::invalid_argument exc) {
-        throw std::runtime_error(value + "is not of type INTEGER");
+        throw std::runtime_error(value + " is not of type INTEGER");
     } catch (std::out_of_range exc) {
         throw std::runtime_error(value + " is out of range of 32-Bit INTEGER");
     }
@@ -76,7 +82,7 @@ void Array::castElement<int64_t>(std::string &value, char *&writer) {
         memcpy(writer, &castValue, sizeof(int64_t));
         writer += sizeof(int64_t);
     } catch (std::invalid_argument exc) {
-        throw std::runtime_error(value + "is not of type INTEGER");
+        throw std::runtime_error(value + " is not of type INTEGER");
     } catch (std::out_of_range exc) {
         throw std::runtime_error(value + " is out of range of 64-Bit INTEGER");
     }
@@ -89,7 +95,7 @@ void Array::castElement<float>(std::string &value, char *&writer) {
         memcpy(writer, &castValue, sizeof(float));
         writer += sizeof(float);
     } catch (std::invalid_argument exc) {
-        throw std::runtime_error(value + "is not of type FLOAT");
+        throw std::runtime_error(value + " is not of type FLOAT");
     } catch (std::out_of_range exc) {
         throw std::runtime_error(value + " is out of range of FLOAT");
     }
@@ -102,7 +108,7 @@ void Array::castElement<double>(std::string &value, char *&writer) {
         memcpy(writer, &castValue, sizeof(double));
         writer += sizeof(double);
     } catch (std::invalid_argument exc) {
-        throw std::runtime_error(value + "is not of type DOUBLE");
+        throw std::runtime_error(value + " is not of type DOUBLE");
     } catch (std::out_of_range exc) {
         throw std::runtime_error(value + " is out of range of DOUBLE");
     }

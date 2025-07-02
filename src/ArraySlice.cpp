@@ -10,6 +10,7 @@ lingodb::runtime::VarLen32 Array::slice(uint32_t lowerBound, uint32_t upperBound
         return createEmptyArray(type);
     }
 
+    // Update metadata
     std::vector<uint32_t> metadata{0,0,0};
     std::vector<uint32_t> metadataLengths{1};
     std::vector<uint32_t> elementIdx;
@@ -21,6 +22,7 @@ lingodb::runtime::VarLen32 Array::slice(uint32_t lowerBound, uint32_t upperBound
     metadata[1] = totalElements;
     metadata[2] = metadataLengths.size() > 1 ? metadataLengths[1] : 0;
 
+    // Get string length and null values
     for (auto &entry : elementIdx) {
         if (checkNull(entry)) {
             nulls.push_back(true);
@@ -32,6 +34,7 @@ lingodb::runtime::VarLen32 Array::slice(uint32_t lowerBound, uint32_t upperBound
         }
     }
 
+    // Define result string
     std::string result;
     uint32_t numberElements = totalElements - std::count(nulls.begin(), nulls.end(), true);
     size_t size = getStringSize(
@@ -45,6 +48,7 @@ lingodb::runtime::VarLen32 Array::slice(uint32_t lowerBound, uint32_t upperBound
     result.resize(size);
     char *buffer = result.data();
 
+    // Write array data into string
     writeToBuffer(buffer, &this->numberDimensions, 1);
     writeToBuffer(buffer, &numberElements, 1);
     writeToBuffer(buffer, metadataLengths.data(), this->numberDimensions);
@@ -59,7 +63,7 @@ lingodb::runtime::VarLen32 Array::slice(uint32_t lowerBound, uint32_t upperBound
 
     if (type == mlir::Type::STRING) {
         size_t idx = 0;
-        for (size_t i = 0; i < getTotalNumberElements(); i++) {
+        for (size_t i = 0; i < getNumberElements(true); i++) {
             if (i == elementIdx[idx] && !checkNull(i)) {
                 copyString(buffer, getElementPosition(i));
                 idx++;
@@ -81,8 +85,10 @@ uint32_t Array::metadataSlice(
     const uint32_t *&entry) {
 
     uint32_t result = 0;
+    // Case for last dimension
     if (dimension == this->numberDimensions) {
         for (uint32_t i = 0; i < entry[1]; i++) {
+            // If slice then proof if element is outside the interval
             if (dimension == sliceDimension && (i < lowerBound || i > upperBound)) {
                 continue;
             }
@@ -92,38 +98,45 @@ uint32_t Array::metadataSlice(
         return result;
     }
 
+    // Case for other dimensions
     auto *subEntry = getChildEntry(entry, dimension);
+    // Identify insert position for the metadata vector
     auto insertPos = 0;
     for (size_t i = 0; i < dimension + 1; i++) {
         if (lengths.size() > i) {
             insertPos += lengths[i] * 3;
         }
     }
+    // Identify insert position for the lengths vector
     auto lengthPos = lengths.size() < dimension + 1 ? lengths.size() : dimension;
     uint32_t newOffset = offset;
+    // Iterate over each child metadata entry
     for (size_t i = 0; i < entry[2] * 3; i+=3) {
+        // If slice then proof if child is outside the interval
         if (dimension == sliceDimension && (i/3 < lowerBound || i/3 > upperBound)) {
             continue;
         }
+        // Adjust metadata length of particular dimension
         if (lengths.size() < dimension + 1) {
             lengths.insert(lengths.begin() + lengthPos, 1);
         } else {
             *(lengths.begin() + lengthPos) += 1;
         }
+        // Add new metadata entry to corresponding vector for this child (triple)
         metadata.insert(metadata.begin() + insertPos, newOffset);
         metadata.insert(metadata.begin() + insertPos+1, 0);
         metadata.insert(metadata.begin() + insertPos+2, 0);
-        /* if (dimension == sliceDimension && (subEntry[i+2] < lowerBound || subEntry[i+2] < upperBound)) {
-            insertPos += 3;
-            continue;
-        } */
+
         auto dimChange = lengths.size() < dimension + 1 ? 0 : lengths[dimension+1];
         auto *child = subEntry + i;
+        // Check child entry recursively
         auto elemLength = metadataSlice(metadata, lengths, elements, lowerBound, upperBound, sliceDimension, dimension + 1, newOffset, child);
+        // Proof if null value must be adopted (not deleted from slice)
         if (elemLength == 0 && subEntry[i+1] == 1 && dimension >= sliceDimension) {
             elements.push_back(subEntry[i]);
             elemLength++;
         }
+        // Adjust elem-Length and dim-Length of new metadata entry
         metadata[insertPos + 1] = elemLength;
         metadata[insertPos + 2] = lengths[dimension+1] - dimChange;
         insertPos += 3;

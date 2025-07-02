@@ -121,6 +121,29 @@ class Array {
     uint32_t getChildNumber(const uint32_t *element, uint32_t dimension);
     uint32_t getElementPosition(uint32_t position);
 
+    /**
+     * This method executes a slice operation on metadata level (This method will
+     * be called recursively).
+     * 
+     * @param metadata      A reference to a vector that stores the updated
+     *                      metadata entries.
+     * @param lengths       A reference to a vector that stores the updated
+     *                      metadata lengths.
+     * @param elements      A reference to a vector that stores the position
+     *                      of each element that should remain (including NULL
+     *                      values).
+     * @param lowerBound    The index of the first element that should remain.
+     *                      Possible value range `[1:]`.
+     * @param upperBound    The index of the last element that should remain.
+     *                      Possible value range `[1:]`.
+     * @param sliceDimension    The dimension in which the slice operation should take
+     *                          place.
+     * @param dimension     The current dimension.
+     * @param offset        The adjusted offset value.
+     * @param entry         A pointer to the metadata element that is processed.
+     * 
+     * @returns             The number of elements in the array structure.
+     */
     uint32_t metadataSlice(
         std::vector<uint32_t> &metadata, 
         std::vector<uint32_t> &lengths, 
@@ -166,7 +189,7 @@ class Array {
             this->numberDimensions, 
             this->numberElements + 1,
             getMetadataLength(),
-            countNullBytes(getTotalNumberElements() + 1),
+            countNullBytes(getNumberElements(true) + 1),
             0,
             type
         );
@@ -198,14 +221,8 @@ class Array {
      * This method will be called recursively over each metadata entry.
      * 
      * @param target        A reference to a string in which the result should be stored.
-     * @param elemOffset    The first element of the current array structure.
-     * @param elemLength    The number of elements in this current array structure.
-     * @param dimLength     The number of metadata entries of next lower dimension
-     *                      corresponding to this array structure.
-     * @param childNumber   The number of this metadata entry in the complete list of
-     *                      all metadata entries from the same dimension.
+     * @param entry         A pointer to the metadata element that is processed.
      * @param dimension     The current dimension.
-     * @param type          The type of each array element.
      * @throws              `std::runtime_error`: If the provided array structure is
      *                      not valid (processable).
      */
@@ -244,17 +261,57 @@ class Array {
 
     static VarLen32 createEmptyArray(mlir::Type type);
 
+    /**
+     * This method copies all array elements in this array into the provided buffer.
+     * 
+     * @param buffer    A reference to the string buffer where the content needs to be stored.
+     */
     void copyElements(char *&buffer);
+
+    /**
+     * This method copies the array element on the given position into the provided buffer.
+     * 
+     * @param buffer    A reference to the string buffer where the content needs to be stored.
+     * @param position  The position of the element. Possible value range `[0:numberElements-1]`. 
+     *                  Position values should not include NULL values.
+     * @throws          `std::runtime_error`: If the position is out of range.
+     */
     void copyElement(char *&buffer, uint32_t position);
+
+    /**
+     * This method copies all strings in this array into the provided buffer.
+     * 
+     * @param buffer    A reference to the string buffer where the content needs to be stored.
+     */
     void copyStrings(char *&buffer);
+
+    /**
+     * This method copies the string on the given position into the provided buffer.
+     * 
+     * @param buffer    A reference to the string buffer where the content needs to be stored.
+     * @param position  The position of the element. Possible value range `[0:numberElements-1]`. 
+     *                  Position values should not include NULL values.
+     * @throws          `std::runtime_error`: If the position is out of range.
+     */
     void copyString(char *&buffer, uint32_t position);
+
+    /**
+     * This method copies the given null bits into the provided buffer.
+     * 
+     * @param buffer            A reference to the string buffer where the content needs to be stored.
+     * @param nulls             A pointer to the null bitstrings that should be copied.
+     * @param numberElements    The number of elements in this array (including NULL values).
+     * @param position          The start position of the first element. 
+     */
     void copyNulls(char *&buffer, const uint8_t *nulls, uint32_t numberElements, uint32_t position);
 
     /**
-     * This function counts the number of NULL values till the given position.
+     * This function counts the number of NULL values up to the specified position.
      * 
      * @param maxPosition   The limit up to which position should be counted.
-     * 
+     *                      Possible value range `[0:numberElements + nulls - 1]`.
+     * @throws              `std::runtime_error`: If the selected position is out of
+     *                      range.
      * @returns             The number of NULL values.
      */
     uint32_t countNulls(uint32_t maxPosition);
@@ -267,16 +324,11 @@ class Array {
     uint32_t getDimension();
 
     /**
-     * This method returns the number of elements in this array without 
-     * NULL values.
+     * This method returns the number of elements in this array.
+     * 
+     * @param withNulls     If NULL values should be included.
      */
-    uint32_t getNumberElements();
-
-    /**
-     * This method returns the number of elements in this array including
-     * NULL values.
-     */
-    uint32_t getTotalNumberElements();
+    uint32_t getNumberElements(bool withNulls = false);
 
     /**
      * This method returns the number of metadata entries in this array.
@@ -287,7 +339,10 @@ class Array {
      * This method returns the number of metadata entris of a specific
      * dimension.
      * 
-     * @param dimension     The selected dimension.
+     * @param dimension     The selected dimension. Possible value range
+     *                      `[1:numberDimensions]`.
+     * @throws              `std::runtime_error`: If the selected dimension
+     *                      is out of range.
      */
     uint32_t getMetadataLength(uint32_t dimension);
 
@@ -297,6 +352,17 @@ class Array {
      */
     uint32_t getStringLength();
 
+    /**
+     * This method returns the string length of a particular element.
+     * 
+     * @param position      The position of the element. Possible value range
+     *                      `[0:numberElements-1]`. Position values should not 
+     *                      include NULL values.
+     * @throws              `std::runtime_error`: If the selected position is
+     *                      out of range.
+     * @returns             A string length if the array stores strings, 
+     *                      otherwise `0`.
+     */
     uint32_t getStringLength(uint32_t position);
 
     /**
@@ -311,12 +377,12 @@ class Array {
 
     /**
      * This method returns a pointer to the first metadata entry that
-     * belongs to the provided dimension (Index of first dimension is
-     * 1).
+     * belongs to the provided dimension.
      * 
-     * @param dimension     The selected dimension.
+     * @param dimension     The selected dimension. Possible value range
+     *                      `[1:numberDimensions]`.
      * @throws              `std::runtime_error`: If the selected dimension is
-     *                      larger than the total number of dimensions.
+     *                      out of range.
      */
     const uint32_t* getFirstEntry(uint32_t dimension);
 
@@ -324,11 +390,11 @@ class Array {
      * This method returns a pointer to the first metadata entry that
      * belongs as child to the given metadata entry.
      * 
-     * @param entry         The metadata entry.
-     * @param dimension     The dimension of the given metadata entry.
+     * @param entry         A pointer to the metadata entry.
+     * @param dimension     The dimension of the given metadata entry. 
+     *                      Possible value range `[1:numberDimensions]`.
      * @throws              `std::runtime_error`: If the selected dimension
-     *                      is larger than the total number of dimensions.
-     * 
+     *                      is out of range.
      * @returns             A pointer to the first child metadata entry. If
      *                      not any child could be found it will return a 
      *                      `nullptr`.
@@ -408,6 +474,22 @@ class Array {
      */
     VarLen32 append(std::string &value);
 
+    /**
+     * This method executes a slice operation.
+     * 
+     * @param lowerBound    The index of the first element that should remain.
+     *                      Possible value range `[1:]`.
+     * @param upperBound    The index of the last element that should remain.
+     *                      Possible value range `[1:]`.
+     * @param dimension     The dimension in which the slice operation should take
+     *                      place.
+     * @throws              `std::runtime_error`: If the given lowerBound is larger
+     *                      than the given upperBound.
+     * @returns             The modified array after the slice operation as string in
+     *                      array processable format. If the given lowerBound and upperBound
+     *                      are out of range, this method will return an empty array in the 
+     *                      specified dimension.
+     */
     VarLen32 slice(uint32_t lowerBound, uint32_t upperBound, uint32_t dimension);
 
     std::string print();
