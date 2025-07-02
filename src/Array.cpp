@@ -4,6 +4,9 @@
 using lingodb::runtime::Array;
 
 Array::Array(std::string &array, mlir::Type type) {
+    if (array.size() == 0) {
+        throw std::runtime_error("Array is empty");
+    }
     char *data = array.data();
     this->numberDimensions = *reinterpret_cast<uint32_t*>(data);
     data += sizeof(uint32_t);

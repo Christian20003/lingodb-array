@@ -24,7 +24,7 @@ lingodb::runtime::VarLen32 Array::slice(uint32_t lowerBound, uint32_t upperBound
     const auto *start = this->metadata;
     auto totalElements = metadataSlice(metadata, metadataLengths, elementIdx, lowerBound-1, upperBound-1, dimension, 1, 0, start);
     metadata[1] = totalElements;
-    metadata[2] = metadataLengths.size() > 1 ? metadataLengths[1] : 0;
+    metadata[2] = metadataLengths[1];
     nulls.reserve(elementIdx.size());
 
     // Get string length and null values

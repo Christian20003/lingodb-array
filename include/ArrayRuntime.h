@@ -15,6 +15,8 @@ namespace lingodb::runtime {
 
         static VarLen32 slice(VarLen32 array, mlir::Type type, int32_t lowerBound, int32_t upperBound, int32_t dimension);
 
+        static VarLen32 subscript(VarLen32 array, mlir::Type type, int32_t position);
+
     };
 
 }
