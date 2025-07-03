@@ -67,6 +67,10 @@ uint32_t Array::getMetadataLength(uint32_t dimension) {
     return this->metadataLengths[dimension-1];
 }
 
+const uint8_t* Array::getElements() {
+    return this->elements;
+}
+
 uint32_t Array::getStringLength() {
     if (type != mlir::Type::STRING) {
         return 0;

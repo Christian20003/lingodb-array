@@ -17,6 +17,14 @@ namespace lingodb::runtime {
 
         static VarLen32 subscript(VarLen32 array, mlir::Type type, int32_t position);
 
+        static VarLen32 add(VarLen32 left, VarLen32 right, mlir::Type leftType, mlir::Type rightType);
+
+        static VarLen32 sub(VarLen32 left, VarLen32 right, mlir::Type leftType, mlir::Type rightType);
+
+        static VarLen32 mul(VarLen32 left, VarLen32 right, mlir::Type leftType, mlir::Type rightType);
+
+        static VarLen32 div(VarLen32 left, VarLen32 right, mlir::Type leftType, mlir::Type rightType);
+
     };
 
 }

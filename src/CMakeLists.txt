@@ -9,6 +9,7 @@ add_library(ArrayBasics
     ArrayAppend.cpp
     ArraySlice.cpp
     ArraySubscript.cpp
+    ArrayArithmetic.cpp
     ArrayPrint.cpp
     ArrayEmpty.cpp
     ArrayRuntime.cpp

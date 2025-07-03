@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cstring>
 #include <tuple>
+#include "ArrayArithmetic.h"
 #include "../include/VarLen32.h"
 #include "../include/Types.h" 
 
@@ -207,6 +208,42 @@ class Array {
     }
 
     /**
+     * This function executes a specified binary function `OP` with numeric values.
+     * 
+     * @param left A pointer to the value of the first parameter of the binary function.
+     * @param right A pointer to the value of the second parameter of the binary function.
+     * @param size The length of both value lists.
+     * @param buffer A reference to a char pointer which points to the string
+     * that should store the result.
+     * @param scalarLeft If the left parameter points to a single element.
+     * @param scalarRight If the right parameter points to a single element. 
+     * @param type The element type.
+     * @throws `std::runtime_error`: If the array type is not supported in this function.
+     */
+    template<class OP>
+    static void executeOperation(const uint8_t *left, const uint8_t *right, uint32_t size, char *&buffer, bool scalarLeft, bool scalarRight, mlir::Type type) {
+        if (type == mlir::Type::INTEGER) {
+            auto *leftVal = reinterpret_cast<const int32_t*>(left);
+            auto *rightVal = reinterpret_cast<const int32_t*>(right);
+            OP::Operator(leftVal, rightVal, size, buffer, scalarLeft, scalarRight);
+        } else if (type == mlir::Type::BIGINTEGER) {
+            auto *leftVal = reinterpret_cast<const int64_t*>(left);
+            auto *rightVal = reinterpret_cast<const int64_t*>(right);
+            OP::Operator(leftVal, rightVal, size, buffer, scalarLeft, scalarRight);
+        } else if (type == mlir::Type::FLOAT) {
+            auto *leftVal = reinterpret_cast<const float*>(left);
+            auto *rightVal = reinterpret_cast<const float*>(right);
+            OP::Operator(leftVal, rightVal, size, buffer, scalarLeft, scalarRight);
+        } else if (type == mlir::Type::DOUBLE) {
+            auto *leftVal = reinterpret_cast<const double*>(left);
+            auto *rightVal = reinterpret_cast<const double*>(right);
+            OP::Operator(leftVal, rightVal, size, buffer, scalarLeft, scalarRight);
+        } else {
+            throw std::runtime_error("Array-Type is not supported");
+        }
+    }
+
+    /**
      * This method transforms the array into its string representation (for printing).
      * This method will be called recursively over each metadata entry.
      * 
@@ -368,6 +405,11 @@ class Array {
     const uint32_t* getMetadata();
 
     /**
+     * This method returns a pointer to the array elements.
+     */
+    const uint8_t* getElements();
+
+    /**
      * This method returns a pointer to the null bitstrings.
      */
     const uint8_t* getNulls();
@@ -437,6 +479,13 @@ class Array {
      * @return `True` if the array is symmetric in each dimension, otherwise `False`.
      */
     bool isSymmetric();
+
+    /**
+     * This method proofs if the element type is numeric.
+     * 
+     * @return `True` if the element type is numeric, otherwise `False`.
+     */
+    bool isNumericType();
 
 /*
  *##########################################################################################################################################################  
@@ -529,7 +578,60 @@ class Array {
      */
     VarLen32 slice(uint32_t lowerBound, uint32_t upperBound, uint32_t dimension);
 
+    /**
+     * This method executes the subscript operator to get an element of this array.
+     * 
+     * @param position The index of the array element that should be returned. Possible
+     * value range `[1:]`.
+     * @return If the array has more than one dimension, it returns another array. If the
+     * array has only a single dimension, it returns the element as string. If no
+     * element could be found, it returns an empty string.
+     */
     VarLen32 operator[](uint32_t position);
+
+    /**
+     * This method executes elementwise addition on each element.
+     * 
+     * @param other A reference to the array whose values are to be used for the addition.
+     * @throws `std::runtime_error`: If the array type is not numeric. If both arrays have
+     * different types. If one array has NULL values or empty array structures. If both
+     * arrays have unequal array structures (unequal metadata).
+     * @return The result array as string in array processable format.
+     */
+    VarLen32 operator+(Array &other);
+
+    /**
+     * This method executes elementwise subtraction on each element.
+     * 
+     * @param other A reference to the array whose values are to be used for the subtraction.
+     * @throws `std::runtime_error`: If the array type is not numeric. If both arrays have
+     * different types. If one array has NULL values or empty array structures. If both
+     * arrays have unequal array structures (unequal metadata).
+     * @return The result array as string in array processable format.
+     */
+    VarLen32 operator-(Array &other);
+
+    /**
+     * This method executes elementwise multiplication on each element.
+     * 
+     * @param other A reference to the array whose values are to be used for the multiplication.
+     * @throws `std::runtime_error`: If the array type is not numeric. If both arrays have
+     * different types. If one array has NULL values or empty array structures. If both
+     * arrays have unequal array structures (unequal metadata).
+     * @return The result array as string in array processable format.
+     */
+    VarLen32 operator*(Array &other);
+
+    /**
+     * This method executes elementwise division on each element.
+     * 
+     * @param other A reference to the array whose values are to be used for the division.
+     * @throws `std::runtime_error`: If the array type is not numeric. If both arrays have
+     * different types. If one array has NULL values or empty array structures. If both
+     * arrays have unequal array structures (unequal metadata).
+     * @return The result array as string in array processable format.
+     */
+    VarLen32 operator/(Array &other);
 
     std::string print();
 

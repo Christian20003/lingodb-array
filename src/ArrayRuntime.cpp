@@ -63,3 +63,51 @@ lingodb::runtime::VarLen32 ArrayRuntime::subscript(lingodb::runtime::VarLen32 ar
     Array arrayObj(arrayVal, type);
     return arrayObj[position];
 }
+
+lingodb::runtime::VarLen32 ArrayRuntime::add(
+    lingodb::runtime::VarLen32 left,
+    lingodb::runtime::VarLen32 right,
+    mlir::Type leftType,
+    mlir::Type rightType) {
+        std::string leftVal = left.str();
+        std::string rightVal = right.str();
+        Array leftArray(leftVal, leftType);
+        Array rightArray(rightVal, rightType);
+        return leftArray + rightArray;
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::sub(
+    lingodb::runtime::VarLen32 left,
+    lingodb::runtime::VarLen32 right,
+    mlir::Type leftType,
+    mlir::Type rightType) {
+        std::string leftVal = left.str();
+        std::string rightVal = right.str();
+        Array leftArray(leftVal, leftType);
+        Array rightArray(rightVal, rightType);
+        return leftArray - rightArray;
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::mul(
+    lingodb::runtime::VarLen32 left,
+    lingodb::runtime::VarLen32 right,
+    mlir::Type leftType,
+    mlir::Type rightType) {
+        std::string leftVal = left.str();
+        std::string rightVal = right.str();
+        Array leftArray(leftVal, leftType);
+        Array rightArray(rightVal, rightType);
+        return leftArray * rightArray;
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::div(
+    lingodb::runtime::VarLen32 left,
+    lingodb::runtime::VarLen32 right,
+    mlir::Type leftType,
+    mlir::Type rightType) {
+        std::string leftVal = left.str();
+        std::string rightVal = right.str();
+        Array leftArray(leftVal, leftType);
+        Array rightArray(rightVal, rightType);
+        return leftArray / rightArray;
+}

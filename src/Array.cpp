@@ -30,6 +30,16 @@ Array::Array(std::string &array, mlir::Type type) {
     }
 }
 
+bool Array::isNumericType() {
+    if (type == mlir::Type::INTEGER ||
+        type == mlir::Type::BIGINTEGER ||
+        type == mlir::Type::FLOAT ||
+        type == mlir::Type::DOUBLE) {
+            return true;
+        }
+    return false;
+}
+
 void Array::printData() {
     size_t metadataLen = 0;
     std::cout << "METADATA-LENGTHS:" << std::endl;
