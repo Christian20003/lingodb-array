@@ -185,20 +185,20 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
     } else {
         for (auto &element : elements) {
             if (type == mlir::Type::INTEGER) {
-                castElement<int32_t>(element, writer);
+                castAndCopyElement<int32_t>(writer, element);
             } else if (type == mlir::Type::BIGINTEGER) {
-                castElement<int64_t>(element, writer);
+                castAndCopyElement<int64_t>(writer, element);
             } else if (type == mlir::Type::FLOAT) {
-                castElement<float>(element, writer);
+                castAndCopyElement<float>(writer, element);
             } else if (type == mlir::Type::DOUBLE) {
-                castElement<double>(element, writer);
+                castAndCopyElement<double>(writer, element);
             } else {
                 throw std::runtime_error("Given type is not supported in arrays");
             }
         }
     }
 
-    castNulls(nulls, writer);
+    copyNulls(writer, nulls);
 
     if (type == mlir::Type::STRING) {
         for (auto &element : elements) {

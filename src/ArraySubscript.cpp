@@ -32,32 +32,32 @@ lingodb::runtime::VarLen32 Array::operator[](uint32_t position) {
     }
     // If array has only a single dimension, return this element without array data.
     if (this->numberDimensions == 1) {
-        if (checkNull(elementIdx[0])) {
+        if (isNull(elementIdx[0])) {
             return VarLen32::fromString(result);
         }
         auto position = getElementPosition(elementIdx[0]);
         if (type == mlir::Type::INTEGER) {
-            result.append(toString<int32_t>(position));
+            toString<int32_t>(position, result);
         } else if (type == mlir::Type::BIGINTEGER) {
-            result.append(toString<int64_t>(position));
+            toString<int64_t>(position, result);
         } else if (type == mlir::Type::FLOAT) {
-            result.append(toString<float>(position));
+            toString<float>(position, result);
         } else if (type == mlir::Type::DOUBLE) {
-            result.append(toString<double>(position));
+            toString<double>(position, result);
         } else {
-            appendStringValue(result, position);
+            toString<std::string>(position, result);
         }
         return VarLen32::fromString(result);
     }
 
     // Get string length and null values
     for (auto &entry : elementIdx) {
-        bool isNull = checkNull(entry);
-        nulls.push_back(isNull);
-        if (type == mlir::Type::STRING && !isNull) {
+        bool null = isNull(entry);
+        nulls.push_back(null);
+        if (type == mlir::Type::STRING && !null) {
             stringLengths += getStringLength(getElementPosition(entry));
         }
-        if (!isNull) numberElements++;
+        if (!null) numberElements++;
     }
 
     // Define result string
@@ -65,7 +65,7 @@ lingodb::runtime::VarLen32 Array::operator[](uint32_t position) {
         dimension,
         numberElements,
         metadata.size() / 3,
-        countNullBytes(totalElements),
+        getNullBytes(totalElements),
         stringLengths,
         type
     );
@@ -79,16 +79,16 @@ lingodb::runtime::VarLen32 Array::operator[](uint32_t position) {
     writeToBuffer(buffer, metadata.data(), metadata.size());
 
     for (auto &entry : elementIdx) {
-        if (!checkNull(entry)) {
+        if (!isNull(entry)) {
             copyElement(buffer, getElementPosition(entry));
         }
     }
-    castNulls(nulls, buffer);
+    copyNulls(buffer, nulls);
 
     if (type == mlir::Type::STRING) {
         for (size_t i = 0; i < elementIdx.size(); i++) {
             auto j = elementIdx[i];
-            if (!checkNull(j)) {
+            if (!isNull(j)) {
                 copyString(buffer, getElementPosition(j));
             }
         }

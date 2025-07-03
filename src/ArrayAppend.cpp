@@ -34,7 +34,7 @@ lingodb::runtime::VarLen32 Array::append(Array &other) {
         leftDimension, 
         leftElements + rightElements,
         newMetadataSize,
-        countNullBytes(leftTotalElements + rightTotalElements),
+        getNullBytes(leftTotalElements + rightTotalElements),
         leftStringLength + rightStringLength,
         type
     );
@@ -151,7 +151,7 @@ lingodb::runtime::VarLen32 Array::appendElement(std::string value) {
         this->numberDimensions, 
         this->numberElements + 1,
         getMetadataLength(),
-        countNullBytes(getNumberElements(true) + 1),
+        getNullBytes(getNumberElements(true) + 1),
         getStringLength() + value.size(),
         type
     );
@@ -174,7 +174,7 @@ lingodb::runtime::VarLen32 Array::appendElement(std::string value) {
     copyElements(buffer);
     uint32_t stringSize = value.size();
     writeToBuffer(buffer, &stringSize, 1);
-    writeToBuffer(buffer, this->nulls, countNullBytes(this->metadata[1]));
+    writeToBuffer(buffer, this->nulls, getNullBytes(this->metadata[1]));
 
     if (this->metadata[1] % 8 == 0) {
         buffer++;

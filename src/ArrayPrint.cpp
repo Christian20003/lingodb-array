@@ -16,19 +16,19 @@ void Array::transform(std::string &target, const uint32_t *entry, uint32_t dimen
         if (entry[1] != 0) {
             // Iterate over each element and add it to result
             for (size_t i = entry[0]; i < entry[0] + entry[1]; i++) {
-                if (checkNull(i)) {
+                if (isNull(i)) {
                     target.append("null");
                 } else {
                     if (type == mlir::Type::INTEGER) {
-                        target.append(toString<int32_t>(getElementPosition(i)));
+                        toString<int32_t>(getElementPosition(i), target);
                     } else if (type == mlir::Type::BIGINTEGER) {
-                        target.append(toString<int64_t>(getElementPosition(i)));
+                        toString<int64_t>(getElementPosition(i), target);
                     } else if (type == mlir::Type::FLOAT) {
-                        target.append(toString<float>(getElementPosition(i)));
+                        toString<float>(getElementPosition(i), target);
                     } else if (type == mlir::Type::DOUBLE) {
-                        target.append(toString<double>(getElementPosition(i)));
+                        toString<double>(getElementPosition(i), target);
                     } else {
-                        appendStringValue(target, getElementPosition(i));
+                        toString<std::string>(getElementPosition(i), target);
                     }
                 }
                 if (i + 1 != entry[0] + entry[1]) {
@@ -48,13 +48,13 @@ void Array::transform(std::string &target, const uint32_t *entry, uint32_t dimen
         for (size_t i = 0; i < entry[2] * 3; i += 3) {
             // Check if first element is a null value
             if (i == 0) {
-                if(start[i] != entry[0] && checkNull(entry[0])) {
+                if(start[i] != entry[0] && isNull(entry[0])) {
                     target.append("null");
                     target.append(",");
                 }
             // Check if previous element is a null value
             } else {
-                if (start[i] > start[i-3] + start[i-2] && checkNull(start[i-3] + start[i-2])) {
+                if (start[i] > start[i-3] + start[i-2] && isNull(start[i-3] + start[i-2])) {
                     target.append("null");
                     target.append(",");
                 }
@@ -65,7 +65,7 @@ void Array::transform(std::string &target, const uint32_t *entry, uint32_t dimen
 
             // Check if last element is null value
             if (i + 3 == entry[2] * 3) {
-                if (start[i] + start[i+1] < entry[0] + entry[1] && checkNull(entry[0] + entry[1] - 1)) {
+                if (start[i] + start[i+1] < entry[0] + entry[1] && isNull(entry[0] + entry[1] - 1)) {
                     target.append("null");
                     target.append(",");
                 }
@@ -73,7 +73,7 @@ void Array::transform(std::string &target, const uint32_t *entry, uint32_t dimen
         }
     // Check if there is a null value 
     } else if (entry[2] == 0 && entry[1] == 1) {
-        if (checkNull(entry[0])) {
+        if (isNull(entry[0])) {
             target.append("null");
         }
     }

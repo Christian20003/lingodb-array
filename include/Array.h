@@ -70,7 +70,7 @@ class Array {
     static void writeToBuffer(char *&buffer, const TYPE *data, uint32_t size) {
         memcpy(buffer, data, sizeof(TYPE) * size);
         buffer += sizeof(TYPE) * size;
-    };
+    }
 
     void printData();
     void printNulls();
@@ -79,22 +79,13 @@ class Array {
      * This function casts a string into a value of the corresponding type `TYPE` and
      * copy its value to the given pointer.
      * 
-     * @param value     A reference to the string which should be casted.
-     * @param writer    A reference to the pointer in which the casted element should be copied.
-     * @throws          `std::runtime_error`: If the value could not be casted or if the resulting
-     *                  value is out of range.
+     * @param buffer A reference to the pointer in which the casted element should be copied.
+     * @param value A reference to the string which should be casted.
+     * @throws `std::runtime_error`: If the value could not be casted or if the resulting
+     * value is out of range.
      */
     template<class TYPE>
-    static void castElement(std::string &value, char *&writer);
-
-    /**
-     * This function transforms an vector of booleans into a bitstring (Each element has 8-bit) and
-     * copy the result to the given pointer.
-     * 
-     * @param nulls     A reference to the boolean vector.
-     * @param writer    A reference to the pointer in which the result should be copied.
-     */
-    static void castNulls(std::vector<bool> &nulls, char *&writer);
+    static void castAndCopyElement(char *&buffer, std::string &value);
 
     /**
      * This function calculates the necessary size of a string to store all data of the array.
@@ -118,7 +109,14 @@ class Array {
      */
     static size_t getTypeSize(mlir::Type type);
 
-    uint32_t getChildNumber(const uint32_t *element, uint32_t dimension);
+    /**
+     * This method returns the exact element position of a value stored in the 
+     * element section of an array.
+     * 
+     * @param position The absolute position of the element (including NULL values).
+     * @throws `std::runtime_error`: If the given position is out of range.
+     * @return The relative position of the element (excluding NULL values).
+     */
     uint32_t getElementPosition(uint32_t position);
 
     /**
@@ -156,23 +154,15 @@ class Array {
         const uint32_t *&entry);
 
     /**
-     * This method casts an element at the given position to a string.
+     * This method casts an element at the given position to a string (only if value
+     * is not of type string) and append it to the end of the target string.
      * 
-     * @param position  The position of the array element.
-     * 
-     * @returns         The casted element as string.
+     * @param position The position of the array element. Possible value range 
+     * `[0:numberElements-1]`.
+     * @throws `std::runtime_error`: If the given position is out of range.
      */
     template<class TYPE>
-    std::string toString(uint32_t position);
-
-    /**
-     * This method appends the array element at the given position to a string.
-     * This method should only be used if the array stores string values.
-     * 
-     * @param target    A reference to a string in which the value should be appended.
-     * @param position  The position of the array element.  
-     */
-    void appendStringValue(std::string &target, uint32_t position);
+    void toString(uint32_t position, std::string &target);
 
     /**
      * This method appends a single element of type `TYPE` to the last array structure
@@ -189,7 +179,7 @@ class Array {
             this->numberDimensions, 
             this->numberElements + 1,
             getMetadataLength(),
-            countNullBytes(getNumberElements(true) + 1),
+            getNullBytes(getNumberElements(true) + 1),
             0,
             type
         );
@@ -212,9 +202,9 @@ class Array {
         }
         copyElements(buffer);
         writeToBuffer(buffer, &value, 1);
-        writeToBuffer(buffer, this->nulls, countNullBytes(this->metadata[1]));
+        writeToBuffer(buffer, this->nulls, getNullBytes(this->metadata[1]));
         return VarLen32::fromString(result);
-    };
+    }
 
     /**
      * This method transforms the array into its string representation (for printing).
@@ -229,13 +219,12 @@ class Array {
     void transform(std::string &target, const uint32_t *entry, uint32_t dimension);
 
     /**
-     * This method proofs if at the given position is a NULL value.
+     * This method proofs if the given position is a NULL value.
      * 
-     * @param position  The position of the array element.
-     * 
-     * @returns         `True` if there is a NULL value, otherwise `False`.
+     * @param position The position of the array element.
+     * @return `True` if there is a NULL value, otherwise `False`.
      */
-    bool checkNull(uint32_t position);
+    bool isNull(uint32_t position);
 
     public:
     /**
@@ -257,7 +246,6 @@ class Array {
      *                  provided elements could not be casted to the specified type.
      */
     static void fromString(std::string &source, std::string &target, mlir::Type type);
-    static uint32_t countNullBytes(uint32_t numberElements);
 
     static VarLen32 createEmptyArray(mlir::Type type);
 
@@ -306,17 +294,26 @@ class Array {
     void copyNulls(char *&buffer, const uint8_t *nulls, uint32_t numberElements, uint32_t position);
 
     /**
+     * This function copies the boolean values from the given vector into the buffer.
+     * Thereby each value is transformed into a single bit and stored in a bitstring (with size 8-bit). 
+     * The order is from left to right. 
+     * 
+     * @param buffer A reference to the string buffer where the content needs to be stored.
+     * @param nulls A reference to the boolean vector.
+     */
+    static void copyNulls(char *&buffer, std::vector<bool> &nulls);
+
+    /**
      * This function counts the number of NULL values up to the specified position.
      * 
-     * @param maxPosition   The limit up to which position should be counted.
-     *                      Possible value range `[0:numberElements + nulls - 1]`.
-     * @throws              `std::runtime_error`: If the selected position is out of
-     *                      range.
-     * @returns             The number of NULL values.
+     * @param maxPosition The limit up to which position should be counted.
+     * Possible value range `[0:numberElements + nulls - 1]`.
+     * @throws `std::runtime_error`: If the selected position is out of range.
+     * @return The number of NULL values.
      */
     uint32_t countNulls(uint32_t maxPosition);
 
-    const mlir::Type getType();
+    mlir::Type getType();
 
     /**
      * This method returns the dimension value of this array.
@@ -376,6 +373,15 @@ class Array {
     const uint8_t* getNulls();
 
     /**
+     * This function returns the number of bytes required to store NULL bits
+     * for each position.
+     * 
+     * @param numberElements The number of elements that requires a NULL bit.
+     * @return Number of NULL bytes.
+     */
+    static uint32_t getNullBytes(uint32_t numberElements);
+
+    /**
      * This method returns a pointer to the first metadata entry that
      * belongs to the provided dimension.
      * 
@@ -400,6 +406,37 @@ class Array {
      *                      `nullptr`.
      */
     const uint32_t* getChildEntry(const uint32_t *entry, uint32_t dimension);
+
+    /**
+     * This method proofs if the given metadata pointer has the same structure
+     * (equal elements) as the metadata from this array.
+     * 
+     * @param other A pointer to the first metadata entry of another array.
+     * @return `True` if each metadata entry is equal, otherwise `False`.
+     */
+    bool equalMetadata(const uint32_t *other);
+
+    /**
+     * This method proofs if the array contains NULL values.
+     * 
+     * @return `True` if a NULL value has been found, otherwise `False`.
+     */
+    bool hasNullValue();
+
+    /**
+     * This method proofs if the array contains an empty array structure.
+     * 
+     * @return `True` if an empty array structure has been found, otherwise `False`.
+     */
+    bool hasEmptyValue();
+
+    /**
+     * This method proofs if the array is symmetric. This means that each dimension
+     * must have equal sizes.
+     * 
+     * @return `True` if the array is symmetric in each dimension, otherwise `False`.
+     */
+    bool isSymmetric();
 
 /*
  *##########################################################################################################################################################  

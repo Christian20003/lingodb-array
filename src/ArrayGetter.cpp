@@ -37,7 +37,7 @@ size_t Array::getTypeSize(mlir::Type type) {
     }
 }
 
-const mlir::Type Array::getType() {
+mlir::Type Array::getType() {
     return this->type;
 }
 

@@ -63,11 +63,10 @@ void Array::copyString(char *&buffer, uint32_t position) {
 }
 
 template<>
-void Array::castElement<int32_t>(std::string &value, char *&writer) {
+void Array::castAndCopyElement<int32_t>(char *&buffer, std::string &value) {
     try {
         int32_t castValue = std::stoi(value);
-        memcpy(writer, &castValue, sizeof(int32_t));
-        writer += sizeof(int32_t);
+        writeToBuffer(buffer, &castValue, 1);
     } catch (std::invalid_argument exc) {
         throw std::runtime_error(value + " is not of type INTEGER");
     } catch (std::out_of_range exc) {
@@ -76,11 +75,10 @@ void Array::castElement<int32_t>(std::string &value, char *&writer) {
 }
 
 template<>
-void Array::castElement<int64_t>(std::string &value, char *&writer) {
+void Array::castAndCopyElement<int64_t>(char *&buffer, std::string &value) {
     try {
         int64_t castValue = std::stol(value);
-        memcpy(writer, &castValue, sizeof(int64_t));
-        writer += sizeof(int64_t);
+        writeToBuffer(buffer, &castValue, 1);
     } catch (std::invalid_argument exc) {
         throw std::runtime_error(value + " is not of type INTEGER");
     } catch (std::out_of_range exc) {
@@ -89,11 +87,10 @@ void Array::castElement<int64_t>(std::string &value, char *&writer) {
 }
 
 template<>
-void Array::castElement<float>(std::string &value, char *&writer) {
+void Array::castAndCopyElement<float>(char *&buffer, std::string &value) {
     try {
         float castValue = std::stof(value);
-        memcpy(writer, &castValue, sizeof(float));
-        writer += sizeof(float);
+        writeToBuffer(buffer, &castValue, 1);
     } catch (std::invalid_argument exc) {
         throw std::runtime_error(value + " is not of type FLOAT");
     } catch (std::out_of_range exc) {
@@ -102,11 +99,10 @@ void Array::castElement<float>(std::string &value, char *&writer) {
 }
 
 template<>
-void Array::castElement<double>(std::string &value, char *&writer) {
+void Array::castAndCopyElement<double>(char *&buffer, std::string &value) {
     try {
         double castValue = std::stod(value);
-        memcpy(writer, &castValue, sizeof(double));
-        writer += sizeof(double);
+        writeToBuffer(buffer, &castValue, 1);
     } catch (std::invalid_argument exc) {
         throw std::runtime_error(value + " is not of type DOUBLE");
     } catch (std::out_of_range exc) {
@@ -115,12 +111,58 @@ void Array::castElement<double>(std::string &value, char *&writer) {
 }
 
 template<>
-void Array::castElement<std::string>(std::string &value, char *&writer) {
-    memcpy(writer, &value, value.size());
-    writer += value.size();
+void Array::castAndCopyElement<std::string>(char *&buffer, std::string &value) {
+    writeToBuffer(buffer, &value, value.size());
 }
 
-void Array::appendStringValue(std::string &target, uint32_t position) {
+uint32_t Array::getElementPosition(uint32_t position) {
+    if (this->numberElements <= position) {
+        throw std::runtime_error("Array-Element does not exist");
+    }
+    return position - countNulls(position);
+}
+
+template<>
+void Array::toString<int32_t>(uint32_t position, std::string &target) {
+    if (this->numberElements <= position) {
+        throw std::runtime_error("Array-Element does not exist");
+    }
+    int32_t value = *reinterpret_cast<int32_t*>(this->elements + position * sizeof(int32_t));
+    target.append(std::to_string(value));
+}
+
+template<>
+void Array::toString<int64_t>(uint32_t position, std::string &target) {
+    if (this->numberElements <= position) {
+        throw std::runtime_error("Array-Element does not exist");
+    }
+    int64_t value = *reinterpret_cast<int64_t*>(this->elements + position * sizeof(int64_t));
+    target.append(std::to_string(value));
+}
+
+template<>
+void Array::toString<float>(uint32_t position, std::string &target) {
+    if (this->numberElements <= position) {
+        throw std::runtime_error("Array-Element does not exist");
+    }
+    float value = *reinterpret_cast<float*>(this->elements + position * sizeof(float));
+    target.append(std::to_string(value));
+}
+
+template<>
+void Array::toString<double>(uint32_t position, std::string &target) {
+    if (this->numberElements <= position) {
+        throw std::runtime_error("Array-Element does not exist");
+    }
+    double value = *reinterpret_cast<double*>(this->elements + position * sizeof(double));
+    target.append(std::to_string(value));
+}
+
+template<>
+void Array::toString<std::string>(uint32_t position, std::string &target) {
+    if (this->numberElements <= position) {
+        throw std::runtime_error("Array-Element does not exist");
+    }
     auto *stringLengths = reinterpret_cast<uint32_t*>(this->elements);
     size_t prevLength = 0;
 
@@ -133,30 +175,13 @@ void Array::appendStringValue(std::string &target, uint32_t position) {
     target.append("\"");
 }
 
-uint32_t Array::getElementPosition(uint32_t position) {
-    return position - countNulls(position);
-}
-
-template<>
-std::string Array::toString<int32_t>(uint32_t position) {
-    int32_t value = *reinterpret_cast<int32_t*>(this->elements + position * sizeof(int32_t));
-    return std::to_string(value);
-}
-
-template<>
-std::string Array::toString<int64_t>(uint32_t position) {
-    int64_t value = *reinterpret_cast<int64_t*>(this->elements + position * sizeof(int64_t));
-    return std::to_string(value);
-}
-
-template<>
-std::string Array::toString<float>(uint32_t position) {
-    float value = *reinterpret_cast<float*>(this->elements + position * sizeof(float));
-    return std::to_string(value);
-}
-
-template<>
-std::string Array::toString<double>(uint32_t position) {
-    double value = *reinterpret_cast<double*>(this->elements + position * sizeof(double));
-    return std::to_string(value);
+bool Array::hasEmptyValue() {
+    auto size = getMetadataLength();
+    // Iterate over each metadata entry and check element-length and dimension-length
+    for (size_t i = 0; i < size * 3; i += 3) {
+        if (this->metadata[i+1] == 0 && this->metadata[i+2] == 0) {
+            return true;
+        }
+    }
+    return false;
 }

@@ -33,18 +33,29 @@ const uint32_t *Array::getChildEntry(const uint32_t *entry, uint32_t dimension) 
     return nullptr;
 }
 
-uint32_t Array::getChildNumber(const uint32_t *element, uint32_t dimension) {
-    if (dimension > this->numberDimensions) {
-        throw std::runtime_error("Requested array element does not exist");
-    }
-    const uint32_t *start = getFirstEntry(dimension-1);
-    uint32_t result = 0;
-    for (size_t i = 0; i < this->metadataLengths[dimension - 1] * 3; i += 3) {
-        if (start + i != element) {
-            result++;
-        } else {
-            return result;
+bool Array::equalMetadata(const uint32_t *other) {
+    auto size = getMetadataLength();
+    // Iterate over each metadata value
+    for (size_t i = 0; i < size * 3; i++) {
+        if (this->metadata[i] != other[i]) {
+            return false;
         }
     }
-    return 0;
+    return true;
+}
+
+bool Array::isSymmetric() {
+    // Iterate over each dimension
+    for (size_t i = 1; i <= this->numberDimensions; i++) {
+        auto size = getMetadataLength(i);
+        auto *start = getFirstEntry(i);
+        uint32_t length = start[2];
+        // Iterate over each metadata entry in a particular dimension
+        for (size_t j = 0; j < size * 3; j += 3) {
+            if (length != start[j+2]) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
