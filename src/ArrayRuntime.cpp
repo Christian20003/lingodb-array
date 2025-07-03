@@ -111,3 +111,99 @@ lingodb::runtime::VarLen32 ArrayRuntime::div(
         Array rightArray(rightVal, rightType);
         return leftArray / rightArray;
 }
+
+lingodb::runtime::VarLen32 ArrayRuntime::scalarAdd(lingodb::runtime::VarLen32 array, mlir::Type type, int32_t value) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.scalarAdd(value);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::scalarAdd(lingodb::runtime::VarLen32 array, mlir::Type type, int64_t value) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.scalarAdd(value);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::scalarAdd(lingodb::runtime::VarLen32 array, mlir::Type type, float value) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.scalarAdd(value);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::scalarAdd(lingodb::runtime::VarLen32 array, mlir::Type type, double value) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.scalarAdd(value);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::scalarSub(lingodb::runtime::VarLen32 array, mlir::Type type, int32_t value, bool isleft) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.scalarSub(value, isleft);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::scalarSub(lingodb::runtime::VarLen32 array, mlir::Type type, int64_t value, bool isleft) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.scalarSub(value, isleft);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::scalarSub(lingodb::runtime::VarLen32 array, mlir::Type type, float value, bool isleft) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.scalarSub(value, isleft);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::scalarSub(lingodb::runtime::VarLen32 array, mlir::Type type, double value, bool isleft) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.scalarSub(value, isleft);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::scalarMul(lingodb::runtime::VarLen32 array, mlir::Type type, int32_t value) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.scalarMul(value);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::scalarMul(lingodb::runtime::VarLen32 array, mlir::Type type, int64_t value) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.scalarMul(value);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::scalarMul(lingodb::runtime::VarLen32 array, mlir::Type type, float value) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.scalarMul(value);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::scalarMul(lingodb::runtime::VarLen32 array, mlir::Type type, double value) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.scalarMul(value);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::scalarDiv(lingodb::runtime::VarLen32 array, mlir::Type type, int32_t value, bool isleft) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.scalarDiv(value, isleft);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::scalarDiv(lingodb::runtime::VarLen32 array, mlir::Type type, int64_t value, bool isleft) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.scalarDiv(value, isleft);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::scalarDiv(lingodb::runtime::VarLen32 array, mlir::Type type, float value, bool isleft) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.scalarDiv(value, isleft);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::scalarDiv(lingodb::runtime::VarLen32 array, mlir::Type type, double value, bool isleft) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.scalarDiv(value, isleft);
+}

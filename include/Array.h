@@ -207,6 +207,22 @@ class Array {
         return VarLen32::fromString(result);
     }
 
+    template<class TYPE, class OP>
+    VarLen32 executeScalarOperation(TYPE value, bool isLeft) {
+        std::string result;
+        auto size = getStringSize(this->numberDimensions, this->numberElements, getMetadataLength(), getNullBytes(this->metadata[1]), 0, type);
+        result.resize(size);
+        char *buffer = result.data();
+        writeToBuffer(buffer, &this->numberDimensions, 1);
+        writeToBuffer(buffer, &this->numberElements, 1);
+        writeToBuffer(buffer, this->metadataLengths, this->numberDimensions + getMetadataLength() * 3);
+        const uint8_t *left = isLeft ? reinterpret_cast<uint8_t*>(&value) : this->elements;
+        const uint8_t *right = isLeft ? this->elements : reinterpret_cast<uint8_t*>(&value);
+        executeOperation<OP>(left, right, this->numberElements, buffer, isLeft, !isLeft, type);
+        copyNulls(buffer, this->nulls, this->metadata[1], 0);
+        return VarLen32::fromString(result);
+    }
+
     /**
      * This function executes a specified binary function `OP` with numeric values.
      * 
@@ -632,6 +648,26 @@ class Array {
      * @return The result array as string in array processable format.
      */
     VarLen32 operator/(Array &other);
+
+    VarLen32 scalarAdd(int32_t value);
+    VarLen32 scalarAdd(int64_t value);
+    VarLen32 scalarAdd(float value);
+    VarLen32 scalarAdd(double value);
+
+    VarLen32 scalarSub(int32_t value, bool isLeft);
+    VarLen32 scalarSub(int64_t value, bool isLeft);
+    VarLen32 scalarSub(float value, bool isLeft);
+    VarLen32 scalarSub(double value, bool isLeft);
+
+    VarLen32 scalarMul(int32_t value);
+    VarLen32 scalarMul(int64_t value);
+    VarLen32 scalarMul(float value);
+    VarLen32 scalarMul(double value);
+
+    VarLen32 scalarDiv(int32_t value, bool isLeft);
+    VarLen32 scalarDiv(int64_t value, bool isLeft);
+    VarLen32 scalarDiv(float value, bool isLeft);
+    VarLen32 scalarDiv(double value, bool isLeft);
 
     std::string print();
 
