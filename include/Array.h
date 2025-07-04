@@ -207,12 +207,22 @@ class Array {
         return VarLen32::fromString(result);
     }
 
+    /**
+     * This method executes a specified binary scalar operation (`OP`).
+     * 
+     * @param value The scalar value of type `TYPE`. Should be numeric type.
+     * @param isLeft If the scalar is on the left side of the operation.
+     * @return The result of the binary scalar operation as string in array
+     * processable format. 
+     */
     template<class TYPE, class OP>
     VarLen32 executeScalarOperation(TYPE value, bool isLeft) {
+        // Define result string size (does not change)
         std::string result;
         auto size = getStringSize(this->numberDimensions, this->numberElements, getMetadataLength(), getNullBytes(this->metadata[1]), 0, type);
         result.resize(size);
         char *buffer = result.data();
+        // Write every content to the result (does not change except elements)
         writeToBuffer(buffer, &this->numberDimensions, 1);
         writeToBuffer(buffer, &this->numberElements, 1);
         writeToBuffer(buffer, this->metadataLengths, this->numberDimensions + getMetadataLength() * 3);
@@ -504,10 +514,10 @@ class Array {
     bool isNumericType();
 
 /*
- *##########################################################################################################################################################  
- *                                                              APPEND METHODS
- *##########################################################################################################################################################
- */ 
+*##########################################################################################################################################################  
+*                                                              APPEND METHODS
+*##########################################################################################################################################################
+*/ 
 
     /**
      * This function appends the other array. Thereby a new array object will be
@@ -594,6 +604,12 @@ class Array {
      */
     VarLen32 slice(uint32_t lowerBound, uint32_t upperBound, uint32_t dimension);
 
+/*
+*##########################################################################################################################################################  
+*                                                              OPERATOR METHODS
+*##########################################################################################################################################################
+*/ 
+
     /**
      * This method executes the subscript operator to get an element of this array.
      * 
@@ -649,24 +665,178 @@ class Array {
      */
     VarLen32 operator/(Array &other);
 
+/*
+*##########################################################################################################################################################  
+*                                                              SCALAR METHODS
+*##########################################################################################################################################################
+*/ 
+
+    /**
+     * This method executes scalar addition. All elements of the array will be added
+     * with the provided value.
+     * 
+     * @param value The scalar value.
+     * @throws 'std::runtime_error': If the array does not store 32-bit integer values.
+     * @return The result array as string in array processable format.
+     */
     VarLen32 scalarAdd(int32_t value);
+
+    /**
+     * This method executes scalar addition. All elements of the array will be added
+     * with the provided value.
+     * 
+     * @param value The scalar value.
+     * @throws 'std::runtime_error': If the array does not store 64-bit integer values.
+     * @return The result array as string in array processable format.
+     */
     VarLen32 scalarAdd(int64_t value);
+
+    /**
+     * This method executes scalar addition. All elements of the array will be added
+     * with the provided value.
+     * 
+     * @param value The scalar value.
+     * @throws 'std::runtime_error': If the array does not store float values.
+     * @return The result array as string in array processable format.
+     */
     VarLen32 scalarAdd(float value);
+
+    /**
+     * This method executes scalar addition. All elements of the array will be added
+     * with the provided value.
+     * 
+     * @param value The scalar value.
+     * @throws 'std::runtime_error': If the array does not store double values.
+     * @return The result array as string in array processable format.
+     */
     VarLen32 scalarAdd(double value);
 
+    /**
+     * This method executes scalar subtraction. All elements of the array will be subtracted
+     * with the provided value.
+     * 
+     * @param value The scalar value.
+     * @param isLeft If the scalar is on the left side of the operation.
+     * @throws 'std::runtime_error': If the array does not store 32-bit integer values.
+     * @return The result array as string in array processable format.
+     */
     VarLen32 scalarSub(int32_t value, bool isLeft);
+
+    /**
+     * This method executes scalar subtraction. All elements of the array will be subtracted
+     * with the provided value.
+     * 
+     * @param value The scalar value.
+     * @param isLeft If the scalar is on the left side of the operation.
+     * @throws 'std::runtime_error': If the array does not store 64-bit integer values.
+     * @return The result array as string in array processable format.
+     */
     VarLen32 scalarSub(int64_t value, bool isLeft);
+
+    /**
+     * This method executes scalar subtraction. All elements of the array will be subtracted
+     * with the provided value.
+     * 
+     * @param value The scalar value.
+     * @param isLeft If the scalar is on the left side of the operation.
+     * @throws 'std::runtime_error': If the array does not store float values.
+     * @return The result array as string in array processable format.
+     */
     VarLen32 scalarSub(float value, bool isLeft);
+
+    /**
+     * This method executes scalar subtraction. All elements of the array will be subtracted
+     * with the provided value.
+     * 
+     * @param value The scalar value.
+     * @param isLeft If the scalar is on the left side of the operation.
+     * @throws 'std::runtime_error': If the array does not store double values.
+     * @return The result array as string in array processable format.
+     */
     VarLen32 scalarSub(double value, bool isLeft);
 
+    /**
+     * This method executes scalar multiplication. All elements of the array will be multiplied
+     * with the provided value.
+     * 
+     * @param value The scalar value.
+     * @throws 'std::runtime_error': If the array does not store 32-bit integer values.
+     * @return The result array as string in array processable format.
+     */
     VarLen32 scalarMul(int32_t value);
+
+    /**
+     * This method executes scalar multiplication. All elements of the array will be multiplied
+     * with the provided value.
+     * 
+     * @param value The scalar value.
+     * @throws 'std::runtime_error': If the array does not store 64-bit integer values.
+     * @return The result array as string in array processable format.
+     */
     VarLen32 scalarMul(int64_t value);
+
+    /**
+     * This method executes scalar multiplication. All elements of the array will be multiplied
+     * with the provided value.
+     * 
+     * @param value The scalar value.
+     * @throws 'std::runtime_error': If the array does not store float values.
+     * @return The result array as string in array processable format.
+     */
     VarLen32 scalarMul(float value);
+
+    /**
+     * This method executes scalar multiplication. All elements of the array will be multiplied
+     * with the provided value.
+     * 
+     * @param value The scalar value.
+     * @throws 'std::runtime_error': If the array does not store double values.
+     * @return The result array as string in array processable format.
+     */
     VarLen32 scalarMul(double value);
 
+    /**
+     * This method executes scalar division. All elements of the array will be divided
+     * with the provided value.
+     * 
+     * @param value The scalar value.
+     * @param isLeft If the scalar is on the left side of the operation.
+     * @throws 'std::runtime_error': If the array does not store 32-bit integer values.
+     * @return The result array as string in array processable format.
+     */
     VarLen32 scalarDiv(int32_t value, bool isLeft);
+
+    /**
+     * This method executes scalar subtraction. All elements of the array will be subtracted
+     * with the provided value.
+     * 
+     * @param value The scalar value.
+     * @param isLeft If the scalar is on the left side of the operation.
+     * @throws 'std::runtime_error': If the array does not store 64-bit integer values.
+     * @return The result array as string in array processable format.
+     */
     VarLen32 scalarDiv(int64_t value, bool isLeft);
+
+    /**
+     * This method executes scalar subtraction. All elements of the array will be subtracted
+     * with the provided value.
+     * 
+     * @param value The scalar value.
+     * @param isLeft If the scalar is on the left side of the operation.
+     * @throws 'std::runtime_error': If the array does not store float values.
+     * @return The result array as string in array processable format.
+     */
     VarLen32 scalarDiv(float value, bool isLeft);
+
+    /**
+     * This method executes scalar subtraction. All elements of the array will be subtracted
+     * with the provided value.
+     * 
+     * @param value The scalar value.
+     * @param isLeft If the scalar is on the left side of the operation.
+     * @throws 'std::runtime_error': If the array does not store double values.
+     * @return The result array as string in array processable format.
+     */
     VarLen32 scalarDiv(double value, bool isLeft);
 
     std::string print();

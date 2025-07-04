@@ -26,7 +26,8 @@ int main() {
     // VarLen32 op = ArrayRuntime::append(var1, mlir::Type::INTEGER, 4);
     // VarLen32 op2 = ArrayRuntime::slice(var1, mlir::Type::INTEGER, 1, 2, 4);
     // VarLen32 op = ArrayRuntime::subscript(var2, mlir::Type::INTEGER, 1);
-    VarLen32 op = ArrayRuntime::div(var3, var3, mlir::Type::INTEGER, mlir::Type::INTEGER);
+    // VarLen32 op = ArrayRuntime::div(var3, var3, mlir::Type::INTEGER, mlir::Type::INTEGER);
+    VarLen32 op = ArrayRuntime::scalarSub(var1, mlir::Type::INTEGER, 5, true);
     std::string array = op.str();
     //std::cout << array << std::endl;
     Array result(array, mlir::Type::INTEGER);

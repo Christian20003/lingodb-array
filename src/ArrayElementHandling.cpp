@@ -116,7 +116,7 @@ void Array::castAndCopyElement<std::string>(char *&buffer, std::string &value) {
 }
 
 uint32_t Array::getElementPosition(uint32_t position) {
-    if (this->numberElements <= position) {
+    if (this->metadata[1] <= position) {
         throw std::runtime_error("Array-Element does not exist");
     }
     return position - countNulls(position);
