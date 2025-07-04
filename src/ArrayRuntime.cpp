@@ -207,3 +207,34 @@ lingodb::runtime::VarLen32 ArrayRuntime::scalarDiv(lingodb::runtime::VarLen32 ar
     Array arrayObj(arrayVal, type);
     return arrayObj.scalarDiv(value, isleft);
 }
+
+lingodb::runtime::VarLen32 ArrayRuntime::fill(int32_t value, lingodb::runtime::VarLen32 array, mlir::Type type) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return Array::fill(value, arrayObj);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::fill(int64_t value, lingodb::runtime::VarLen32 array, mlir::Type type) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return Array::fill(value, arrayObj);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::fill(float value, lingodb::runtime::VarLen32 array, mlir::Type type) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return Array::fill(value, arrayObj);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::fill(double value, lingodb::runtime::VarLen32 array, mlir::Type type) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return Array::fill(value, arrayObj);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::fill(VarLen32 value, lingodb::runtime::VarLen32 array, mlir::Type type) {
+    std::string arrayVal = array.str();
+    std::string val = value.str();
+    Array arrayObj(arrayVal, type);
+    return Array::fill(val, arrayObj);
+}

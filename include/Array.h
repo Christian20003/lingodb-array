@@ -204,6 +204,19 @@ class Array {
     static void executeOperation(const uint8_t *left, const uint8_t *right, uint32_t size, char *&buffer, bool scalarLeft, bool scalarRight, mlir::Type type);
 
     /**
+     * This function generates an array with the given value and structure.
+     * 
+     * @param value A pointer to the value which represents the array element.
+     * @param structure A reference to an array which specifies the resulting
+     * structure. NULL values and multiple dimensions will be ignored.
+     * @param type The type of the array elements.
+     * @param stringSize The length of the string element (if value is of type `char`)
+     * @return The resulting array as string in array processable format.
+     */
+    template<class TYPE, class ARRAYTYPE>
+    static VarLen32 generate(TYPE *value, Array &structure, mlir::Type type, uint32_t stringSize = 0);
+
+    /**
      * This method transforms the array into its string representation (for printing).
      * This method will be called recursively over each metadata entry.
      * 
@@ -772,6 +785,16 @@ class Array {
      * @return The result array as string in array processable format.
      */
     VarLen32 scalarDiv(double value, bool isLeft);
+
+    static VarLen32 fill(int32_t value, Array &structure);
+
+    static VarLen32 fill(int64_t value, Array &structure);
+
+    static VarLen32 fill(float value, Array &structure);
+
+    static VarLen32 fill(double value, Array &structure);
+
+    static VarLen32 fill(std::string &value, Array &structure);
 
     std::string print();
 
