@@ -217,6 +217,17 @@ class Array {
     static VarLen32 generate(TYPE *value, Array &structure, mlir::Type type, uint32_t stringSize = 0);
 
     /**
+     * This function generates an array with the given structure filled with NULL values.
+     * 
+     * @param structure A reference to an array which specifies the resulting
+     * structure. NULL values and multiple dimensions will be ignored.
+     * @param type The type of the array elements.
+     * @return The resulting array as string in array processable format.
+     */
+    template<class ARRAYTYPE>
+    static VarLen32 generate(Array &structure, mlir::Type type);
+
+    /**
      * This method transforms the array into its string representation (for printing).
      * This method will be called recursively over each metadata entry.
      * 
@@ -611,6 +622,16 @@ class Array {
     template<class TYPE>
     static VarLen32 fill(TYPE &value, Array &structure);
 
+    /**
+     * This function generates an array with the given structure filled with NULL values.
+     * 
+     * @param structure A reference to an array that specifies the dimension structure of
+     * the resulting array. NULL values, empty array elements and multiple dimensions will
+     * be ignored.
+     * @throws 'std::runtime_error': If the array structure parameter does not store integer
+     * values. If the array structure parameter does not contain any elements.
+     * @return The generated array as string in array processable format.
+     */
     static VarLen32 fill(Array &structure);
 
     std::string print();

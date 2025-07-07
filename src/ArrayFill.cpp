@@ -71,3 +71,16 @@ lingodb::runtime::VarLen32 Array::fill(std::string &value, Array &structure) {
         throw std::runtime_error("Array-Fill: Function supports only integer arrays");
     }
 }
+
+lingodb::runtime::VarLen32 Array::fill(Array &structure) {
+    if (structure.getNumberElements() == 0) {
+        throw std::runtime_error("Array-Fill: Array argument should contain elements");
+    }
+    if (structure.getType() == mlir::Type::INTEGER) {
+        return generate<int32_t>(structure, mlir::Type::INTEGER);
+    } else if (structure.getType() == mlir::Type::BIGINTEGER) {
+        return generate<int64_t>(structure, mlir::Type::INTEGER);
+    } else {
+        throw std::runtime_error("Array-Fill: Function supports only integer arrays");
+    }
+}
