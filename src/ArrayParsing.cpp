@@ -31,7 +31,7 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
             case '{':
             {
                 // Check if all elements are at the same dimension level
-                if (elementDimension < dimension+1) {
+                if (elementDimension != 0 && elementDimension < dimension+1) {
                     throw std::runtime_error("Invalid array specification: Inconsistent dimensions - found elements in different dimensions");
                 }
                 // If not in first dimension, update dimension-length of upper dimension
