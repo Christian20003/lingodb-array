@@ -2,32 +2,74 @@
 
 using lingodb::runtime::Array;
 
-lingodb::runtime::VarLen32 Array::append(Array &other) {
-    if (this->type != other.getType()) {
+template<>
+lingodb::runtime::VarLen32 Array::appendElement(std::string value) {
+    std::string result = "";
+    size_t size = getStringSize(
+        this->numberDimensions, 
+        this->numberElements + 1,
+        getMetadataLength(),
+        getNullBytes(getNumberElements(true) + 1),
+        getStringLength() + value.size(),
+        type
+    );
+
+    result.resize(size);
+    char *buffer = result.data();
+    uint32_t numberElements = this->numberElements + 1;
+    writeToBuffer(buffer, &this->numberDimensions, 1);
+    writeToBuffer(buffer, &numberElements, 1);
+    writeToBuffer(buffer, this->metadataLengths, this->numberDimensions);
+    for (size_t i = 1; i <= this->numberDimensions; i++) {
+        const uint32_t *metadata = getFirstEntry(i);
+        uint32_t metadataLength = getMetadataLength(i);
+        uint32_t newLength = metadata[metadataLength * 3 - 2] + 1;
+        writeToBuffer(buffer, metadata, (metadataLength - 1) * 3);
+        writeToBuffer(buffer, &metadata[metadataLength * 3 - 3], 1);
+        writeToBuffer(buffer, &newLength, 1);
+        writeToBuffer(buffer, &metadata[metadataLength * 3 - 1], 1);
+    }
+    copyElements(buffer);
+    uint32_t stringSize = value.size();
+    writeToBuffer(buffer, &stringSize, 1);
+    writeToBuffer(buffer, this->nulls, getNullBytes(this->metadata[1]));
+
+    if (this->metadata[1] % 8 == 0) {
+        buffer++;
+    }
+    copyStrings(buffer);
+    writeToBuffer(buffer, value.data(), stringSize);
+
+    return VarLen32::fromString(result);
+};
+
+template<>
+lingodb::runtime::VarLen32 Array::append(Array &toAppend) {
+    if (this->type != toAppend.getType()) {
         throw std::runtime_error("Array-Append: Arrays have different types");
     }
-    if (this->numberDimensions < other.getDimension()) {
+    if (this->numberDimensions < toAppend.getDimension()) {
         throw std::runtime_error("Array-Append: Right array has more dimensions than left array");
     }
 
     uint32_t leftDimension = this->numberDimensions;
-    uint32_t rightDimension = other.getDimension();
+    uint32_t rightDimension = toAppend.getDimension();
 
     uint32_t leftElements = this->numberElements;
     uint32_t leftTotalElements = this->metadata[1];
-    uint32_t rightElements = other.getNumberElements();
-    uint32_t rightTotalElements = other.getNumberElements(true);
+    uint32_t rightElements = toAppend.getNumberElements();
+    uint32_t rightTotalElements = toAppend.getNumberElements(true);
 
     uint32_t leftStringLength = getStringLength();
-    uint32_t rightStringLength = other.getStringLength();
+    uint32_t rightStringLength = toAppend.getStringLength();
 
     // result will store the extended array
     std::string result = "";
     uint32_t newMetadataSize = getMetadataLength();
-    if (this->numberDimensions == other.getDimension()) {
-        newMetadataSize += other.getMetadataLength() - 1;
+    if (this->numberDimensions == toAppend.getDimension()) {
+        newMetadataSize += toAppend.getMetadataLength() - 1;
     } else {
-        newMetadataSize += other.getMetadataLength();
+        newMetadataSize += toAppend.getMetadataLength();
     }
     // First step: calculate the new size of the resulting string
     size_t size = getStringSize(
@@ -54,7 +96,7 @@ lingodb::runtime::VarLen32 Array::append(Array &other) {
         // Append right to next higher dimension on left (right will be new child)
         uint32_t newLength = getMetadataLength(leftIdx);
         if (rightDimension == i && rightDimension < leftDimension) {
-            newLength += other.getMetadataLength(rightIdx);
+            newLength += toAppend.getMetadataLength(rightIdx);
             writeToBuffer(buffer, &newLength, 1);
             rightIdx++;
         // Left and right have same dimension. Append all childs from right to left
@@ -64,9 +106,9 @@ lingodb::runtime::VarLen32 Array::append(Array &other) {
         // Left has much more dimensions than right (Copy values from left)
         } else if (rightDimension < i) {
             writeToBuffer(buffer, &newLength, 1);
-        // Otherwise copy new child metadata length values
+        // toAppendwise copy new child metadata length values
         } else {
-            newLength += other.getMetadataLength(rightIdx);
+            newLength += toAppend.getMetadataLength(rightIdx);
             writeToBuffer(buffer, &newLength, 1);
             rightIdx++;
         }
@@ -79,9 +121,9 @@ lingodb::runtime::VarLen32 Array::append(Array &other) {
     bool onlyAppend = false;
     for (size_t i = leftDimension; i > 0; i--) {
         const uint32_t *leftMetadata = getFirstEntry(leftMetadataIdx);
-        const uint32_t *rightMetadata = other.getFirstEntry(rightMetadataIdx);
+        const uint32_t *rightMetadata = toAppend.getFirstEntry(rightMetadataIdx);
         uint32_t leftMetadataLength = getMetadataLength(leftMetadataIdx);
-        uint32_t rightMetadataLength = other.getMetadataLength(rightMetadataIdx);
+        uint32_t rightMetadataLength = toAppend.getMetadataLength(rightMetadataIdx);
         // Check if dimension level is reached to append array structures from right
         if (rightDimension <= i && !onlyAppend) {
             // Iterate over each metadata entry from left in current dimension
@@ -127,7 +169,7 @@ lingodb::runtime::VarLen32 Array::append(Array &other) {
     }
     // Add elements to result
     copyElements(buffer);
-    other.copyElements(buffer);
+    toAppend.copyElements(buffer);
 
     // Add null values to result
     copyNulls(buffer, this->nulls, leftTotalElements, 0);
@@ -135,87 +177,51 @@ lingodb::runtime::VarLen32 Array::append(Array &other) {
     if (leftTotalElements % 8 != 0) {
         buffer -= 1;
     } 
-    copyNulls(buffer, other.getNulls(), rightTotalElements, leftTotalElements);
+    copyNulls(buffer, toAppend.getNulls(), rightTotalElements, leftTotalElements);
 
     // Add string values to result
     copyStrings(buffer);
-    other.copyStrings(buffer);
+    toAppend.copyStrings(buffer);
 
     return VarLen32::fromString(result);
 }
 
 template<>
-lingodb::runtime::VarLen32 Array::appendElement(std::string value) {
-    std::string result = "";
-    size_t size = getStringSize(
-        this->numberDimensions, 
-        this->numberElements + 1,
-        getMetadataLength(),
-        getNullBytes(getNumberElements(true) + 1),
-        getStringLength() + value.size(),
-        type
-    );
-
-    result.resize(size);
-    char *buffer = result.data();
-    uint32_t numberElements = this->numberElements + 1;
-    writeToBuffer(buffer, &this->numberDimensions, 1);
-    writeToBuffer(buffer, &numberElements, 1);
-    writeToBuffer(buffer, this->metadataLengths, this->numberDimensions);
-    for (size_t i = 1; i <= this->numberDimensions; i++) {
-        const uint32_t *metadata = getFirstEntry(i);
-        uint32_t metadataLength = getMetadataLength(i);
-        uint32_t newLength = metadata[metadataLength * 3 - 2] + 1;
-        writeToBuffer(buffer, metadata, (metadataLength - 1) * 3);
-        writeToBuffer(buffer, &metadata[metadataLength * 3 - 3], 1);
-        writeToBuffer(buffer, &newLength, 1);
-        writeToBuffer(buffer, &metadata[metadataLength * 3 - 1], 1);
-    }
-    copyElements(buffer);
-    uint32_t stringSize = value.size();
-    writeToBuffer(buffer, &stringSize, 1);
-    writeToBuffer(buffer, this->nulls, getNullBytes(this->metadata[1]));
-
-    if (this->metadata[1] % 8 == 0) {
-        buffer++;
-    }
-    copyStrings(buffer);
-    writeToBuffer(buffer, value.data(), stringSize);
-
-    return VarLen32::fromString(result);
-};
-
-lingodb::runtime::VarLen32 Array::append(int32_t value) {
+lingodb::runtime::VarLen32 Array::append(int32_t &toAppend) {
     if (type != mlir::Type::INTEGER) {
         throw std::runtime_error("Array-Append: Array elements are not of type integer (32-bit)");
     }
-    return appendElement(value);
+    return appendElement(toAppend);
 }
 
-lingodb::runtime::VarLen32 Array::append(int64_t value) {
+template<>
+lingodb::runtime::VarLen32 Array::append(int64_t &toAppend) {
     if (type != mlir::Type::BIGINTEGER) {
         throw std::runtime_error("Array-Append: Array elements are not of type integer (64-bit)");
     }
-    return appendElement(value);
+    return appendElement(toAppend);
 }
 
-lingodb::runtime::VarLen32 Array::append(float value) {
+template<>
+lingodb::runtime::VarLen32 Array::append(float &toAppend) {
     if (type != mlir::Type::FLOAT) {
         throw std::runtime_error("Array-Append: Array elements are not of type float");
     }
-    return appendElement(value);
+    return appendElement(toAppend);
 }
 
-lingodb::runtime::VarLen32 Array::append(double value) {
+template<>
+lingodb::runtime::VarLen32 Array::append(double &toAppend) {
     if (type != mlir::Type::DOUBLE) {
         throw std::runtime_error("Array-Append: Array elements are not of type double");
     }
-    return appendElement(value);
+    return appendElement(toAppend);
 }
 
-lingodb::runtime::VarLen32 Array::append(std::string &value) {
+template<>
+lingodb::runtime::VarLen32 Array::append(std::string &toAppend) {
     if (type != mlir::Type::STRING) {
         throw std::runtime_error("Array-Append: Array elements are not of type string");
     }
-    return appendElement(value);
+    return appendElement(toAppend);
 }

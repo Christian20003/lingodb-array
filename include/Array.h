@@ -460,94 +460,31 @@ class Array {
      */
     bool isNumericType();
 
-/*
-*##########################################################################################################################################################  
-*                                                              APPEND METHODS
-*##########################################################################################################################################################
-*/ 
-
     /**
-     * This function appends the other array. Thereby a new array object will be
-     * created returned as `VarLen32` object.
+     * This function appends a structure or value of type `TYPE` to the array. Thereby the content
+     * will be appended to the last array element. This depends on the dimension structure of the
+     * parameter.
      * 
-     * @param other     A reference to the array that should be appended.
-     * @throws          `std::runtime_error`: If the array to be appended has more dimensions.
-     *                  If both arrays have different types.
-     * 
-     * @returns         The string in array processable format storing the extended array. 
+     * @param toAppend A reference to the structure or value that should be appended.
+     * @throws `std::runtime_error`: If the structure to be appended has more dimensions or a 
+     * different element type. If the value to be appended of a different type.
+     * @return The string in array processable format storing the extended array. 
      */
-    VarLen32 append(Array &other);
-
-    /**
-     * This method appends a single integer value to the last array element in the lowest 
-     * dimension.
-     * 
-     * @param value     The value which should be appended.
-     * @throws          `std::runtime_error`: If the array does not store 32-bit integer values.
-     * 
-     * @returns         The extended array in array processable string format.
-     */
-    VarLen32 append(int32_t value);
-
-    /**
-     * This method appends a single integer value to the last array element in the lowest 
-     * dimension.
-     * 
-     * @param value     The value which should be appended.
-     * @throws          `std::runtime_error`: If the array does not store 64-bit integer values.
-     * 
-     * @returns         The extended array in array processable string format.
-     */
-    VarLen32 append(int64_t value);
-
-    /**
-     * This method appends a single float value to the last array element in the lowest 
-     * dimension.
-     * 
-     * @param value     The value which should be appended.
-     * @throws          `std::runtime_error`: If the array does not store float values.
-     * 
-     * @returns         The extended array in array processable string format.
-     */
-    VarLen32 append(float value);
-
-    /**
-     * This method appends a single double value to the last array element in the lowest 
-     * dimension.
-     * 
-     * @param value     The value which should be appended.
-     * @throws          `std::runtime_error`: If the array does not store double values.
-     * 
-     * @returns         The extended array in array processable string format.
-     */
-    VarLen32 append(double value);
-
-    /**
-     * This method appends a single string value to the last array element in the lowest 
-     * dimension.
-     * 
-     * @param value     The value which should be appended.
-     * @throws          `std::runtime_error`: If the array does not store string values.
-     * 
-     * @returns         The extended array in array processable string format.
-     */
-    VarLen32 append(std::string &value);
+    template<class TYPE> 
+    VarLen32 append(TYPE &toAppend);
 
     /**
      * This method executes a slice operation.
      * 
-     * @param lowerBound    The index of the first element that should remain.
-     *                      Possible value range `[1:]`.
-     * @param upperBound    The index of the last element that should remain.
-     *                      Possible value range `[1:]`.
-     * @param dimension     The dimension in which the slice operation should take
-     *                      place.
-     * @throws              `std::runtime_error`: If the given lowerBound is larger
-     *                      than the given upperBound.
-     * @returns             The modified array after the slice operation as string in
-     *                      array processable format. If the given lowerBound and upperBound
-     *                      are out of range, this method will return an empty array in the 
-     *                      specified dimension.
+     * @param lowerBound The index of the first element that should remain.
+     * Possible value range `[1:]`.
+     * @param upperBound The index of the last element that should remain.
+     * Possible value range `[1:]`.
+     * @param dimension The dimension in which the slice operation should take place.
+     * @throws `std::runtime_error`: If the given lowerBound is larger than the given upperBound.
+     * @return The modified array after the slice operation as string in array processable format. 
+     * If the given lowerBound and upperBound are out of range, this method will return an empty 
+     * array in the specified dimension.
      */
     VarLen32 slice(uint32_t lowerBound, uint32_t upperBound, uint32_t dimension);
 
@@ -610,191 +547,71 @@ class Array {
      * arrays have unequal array structures (unequal metadata).
      * @return The result array as string in array processable format.
      */
-    VarLen32 operator/(Array &other);
-
-/*
-*##########################################################################################################################################################  
-*                                                              SCALAR METHODS
-*##########################################################################################################################################################
-*/ 
+    VarLen32 operator/(Array &other); 
 
     /**
      * This method executes scalar addition. All elements of the array will be added
      * with the provided value.
      * 
-     * @param value The scalar value.
-     * @throws 'std::runtime_error': If the array does not store 32-bit integer values.
+     * @param value The scalar value of type `TYPE`.
+     * @throws 'std::runtime_error': If the array does not store values of type `TYPE`.
      * @return The result array as string in array processable format.
      */
-    VarLen32 scalarAdd(int32_t value);
-
-    /**
-     * This method executes scalar addition. All elements of the array will be added
-     * with the provided value.
-     * 
-     * @param value The scalar value.
-     * @throws 'std::runtime_error': If the array does not store 64-bit integer values.
-     * @return The result array as string in array processable format.
-     */
-    VarLen32 scalarAdd(int64_t value);
-
-    /**
-     * This method executes scalar addition. All elements of the array will be added
-     * with the provided value.
-     * 
-     * @param value The scalar value.
-     * @throws 'std::runtime_error': If the array does not store float values.
-     * @return The result array as string in array processable format.
-     */
-    VarLen32 scalarAdd(float value);
-
-    /**
-     * This method executes scalar addition. All elements of the array will be added
-     * with the provided value.
-     * 
-     * @param value The scalar value.
-     * @throws 'std::runtime_error': If the array does not store double values.
-     * @return The result array as string in array processable format.
-     */
-    VarLen32 scalarAdd(double value);
+    template<class TYPE>
+    VarLen32 scalarAdd(TYPE value);
 
     /**
      * This method executes scalar subtraction. All elements of the array will be subtracted
      * with the provided value.
      * 
-     * @param value The scalar value.
+     * @param value The scalar value of type `TYPE`.
      * @param isLeft If the scalar is on the left side of the operation.
-     * @throws 'std::runtime_error': If the array does not store 32-bit integer values.
+     * @throws 'std::runtime_error': If the array does not store values of type `TYPE`.
      * @return The result array as string in array processable format.
      */
-    VarLen32 scalarSub(int32_t value, bool isLeft);
-
-    /**
-     * This method executes scalar subtraction. All elements of the array will be subtracted
-     * with the provided value.
-     * 
-     * @param value The scalar value.
-     * @param isLeft If the scalar is on the left side of the operation.
-     * @throws 'std::runtime_error': If the array does not store 64-bit integer values.
-     * @return The result array as string in array processable format.
-     */
-    VarLen32 scalarSub(int64_t value, bool isLeft);
-
-    /**
-     * This method executes scalar subtraction. All elements of the array will be subtracted
-     * with the provided value.
-     * 
-     * @param value The scalar value.
-     * @param isLeft If the scalar is on the left side of the operation.
-     * @throws 'std::runtime_error': If the array does not store float values.
-     * @return The result array as string in array processable format.
-     */
-    VarLen32 scalarSub(float value, bool isLeft);
-
-    /**
-     * This method executes scalar subtraction. All elements of the array will be subtracted
-     * with the provided value.
-     * 
-     * @param value The scalar value.
-     * @param isLeft If the scalar is on the left side of the operation.
-     * @throws 'std::runtime_error': If the array does not store double values.
-     * @return The result array as string in array processable format.
-     */
-    VarLen32 scalarSub(double value, bool isLeft);
+    template<class TYPE>
+    VarLen32 scalarSub(TYPE value, bool isLeft);
 
     /**
      * This method executes scalar multiplication. All elements of the array will be multiplied
      * with the provided value.
      * 
-     * @param value The scalar value.
-     * @throws 'std::runtime_error': If the array does not store 32-bit integer values.
+     * @param value The scalar value of type `TYPE`.
+     * @throws 'std::runtime_error': If the array does not store values of type `TYPE`.
      * @return The result array as string in array processable format.
      */
-    VarLen32 scalarMul(int32_t value);
-
-    /**
-     * This method executes scalar multiplication. All elements of the array will be multiplied
-     * with the provided value.
-     * 
-     * @param value The scalar value.
-     * @throws 'std::runtime_error': If the array does not store 64-bit integer values.
-     * @return The result array as string in array processable format.
-     */
-    VarLen32 scalarMul(int64_t value);
-
-    /**
-     * This method executes scalar multiplication. All elements of the array will be multiplied
-     * with the provided value.
-     * 
-     * @param value The scalar value.
-     * @throws 'std::runtime_error': If the array does not store float values.
-     * @return The result array as string in array processable format.
-     */
-    VarLen32 scalarMul(float value);
-
-    /**
-     * This method executes scalar multiplication. All elements of the array will be multiplied
-     * with the provided value.
-     * 
-     * @param value The scalar value.
-     * @throws 'std::runtime_error': If the array does not store double values.
-     * @return The result array as string in array processable format.
-     */
-    VarLen32 scalarMul(double value);
+    template<class TYPE>
+    VarLen32 scalarMul(TYPE value);
 
     /**
      * This method executes scalar division. All elements of the array will be divided
      * with the provided value.
      * 
-     * @param value The scalar value.
+     * @param value The scalar value of type `TYPE`.
      * @param isLeft If the scalar is on the left side of the operation.
-     * @throws 'std::runtime_error': If the array does not store 32-bit integer values.
+     * @throws 'std::runtime_error': If the array does not store values of type `TYPE`.
      * @return The result array as string in array processable format.
      */
-    VarLen32 scalarDiv(int32_t value, bool isLeft);
+    template<class TYPE>
+    VarLen32 scalarDiv(TYPE value, bool isLeft);
 
     /**
-     * This method executes scalar subtraction. All elements of the array will be subtracted
-     * with the provided value.
+     * This function generates an array with the given structure filled with the given
+     * value. 
      * 
-     * @param value The scalar value.
-     * @param isLeft If the scalar is on the left side of the operation.
-     * @throws 'std::runtime_error': If the array does not store 64-bit integer values.
-     * @return The result array as string in array processable format.
+     * @param value A reference to the value which represents the array element. Defines
+     * the type of the resulting array.
+     * @param structure A reference to an array that specifies the dimension structure of
+     * the resulting array. NULL values, empty array elements and multiple dimensions will
+     * be ignored.
+     * @throws 'std::runtime_error': If the array structure parameter does not store integer
+     * values. If the array structure parameter does not contain any elements.
+     * @return The generated array as string in array processable format.
      */
-    VarLen32 scalarDiv(int64_t value, bool isLeft);
+    template<class TYPE>
+    static VarLen32 fill(TYPE &value, Array &structure);
 
-    /**
-     * This method executes scalar subtraction. All elements of the array will be subtracted
-     * with the provided value.
-     * 
-     * @param value The scalar value.
-     * @param isLeft If the scalar is on the left side of the operation.
-     * @throws 'std::runtime_error': If the array does not store float values.
-     * @return The result array as string in array processable format.
-     */
-    VarLen32 scalarDiv(float value, bool isLeft);
-
-    /**
-     * This method executes scalar subtraction. All elements of the array will be subtracted
-     * with the provided value.
-     * 
-     * @param value The scalar value.
-     * @param isLeft If the scalar is on the left side of the operation.
-     * @throws 'std::runtime_error': If the array does not store double values.
-     * @return The result array as string in array processable format.
-     */
-    VarLen32 scalarDiv(double value, bool isLeft);
-
-    static VarLen32 fill(int32_t value, Array &structure);
-
-    static VarLen32 fill(int64_t value, Array &structure);
-
-    static VarLen32 fill(float value, Array &structure);
-
-    static VarLen32 fill(double value, Array &structure);
-
-    static VarLen32 fill(std::string &value, Array &structure);
+    static VarLen32 fill(Array &structure);
 
     std::string print();
 

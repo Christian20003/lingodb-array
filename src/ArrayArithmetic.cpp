@@ -134,6 +134,7 @@ lingodb::runtime::VarLen32 Array::operator/(Array &other) {
     return VarLen32::fromString(result);
 }
 
+template<>
 lingodb::runtime::VarLen32 Array::scalarAdd(int32_t value) {
     if (type != mlir::Type::INTEGER) {
         throw std::runtime_error("Array-Add: Array elements are not of type integer (32-bit)");
@@ -141,6 +142,7 @@ lingodb::runtime::VarLen32 Array::scalarAdd(int32_t value) {
     return executeScalarOperation<int32_t, ArrayAddOperator>(value, true);
 }
 
+template<>
 lingodb::runtime::VarLen32 Array::scalarAdd(int64_t value) {
     if (type != mlir::Type::BIGINTEGER) {
         throw std::runtime_error("Array-Add: Array elements are not of type integer (64-bit)");
@@ -148,6 +150,7 @@ lingodb::runtime::VarLen32 Array::scalarAdd(int64_t value) {
     return executeScalarOperation<int64_t, ArrayAddOperator>(value, true);
 }
 
+template<>
 lingodb::runtime::VarLen32 Array::scalarAdd(float value) {
     if (type != mlir::Type::FLOAT) {
         throw std::runtime_error("Array-Add: Array elements are not of type float");
@@ -155,6 +158,7 @@ lingodb::runtime::VarLen32 Array::scalarAdd(float value) {
     return executeScalarOperation<float, ArrayAddOperator>(value, true);
 }
 
+template<>
 lingodb::runtime::VarLen32 Array::scalarAdd(double value) {
     if (type != mlir::Type::DOUBLE) {
         throw std::runtime_error("Array-Add: Array elements are not of type double");
@@ -162,6 +166,7 @@ lingodb::runtime::VarLen32 Array::scalarAdd(double value) {
     return executeScalarOperation<double, ArrayAddOperator>(value, true);
 }
 
+template<>
 lingodb::runtime::VarLen32 Array::scalarSub(int32_t value, bool isLeft) {
     if (type != mlir::Type::INTEGER) {
         throw std::runtime_error("Array-Add: Array elements are not of type integer (32-bit)");
@@ -169,6 +174,7 @@ lingodb::runtime::VarLen32 Array::scalarSub(int32_t value, bool isLeft) {
     return executeScalarOperation<int32_t, ArraySubOperator>(value, isLeft);
 }
 
+template<>
 lingodb::runtime::VarLen32 Array::scalarSub(int64_t value, bool isLeft) {
     if (type != mlir::Type::BIGINTEGER) {
         throw std::runtime_error("Array-Add: Array elements are not of type integer (64-bit)");
@@ -176,6 +182,7 @@ lingodb::runtime::VarLen32 Array::scalarSub(int64_t value, bool isLeft) {
     return executeScalarOperation<int64_t, ArraySubOperator>(value, isLeft);
 }
 
+template<>
 lingodb::runtime::VarLen32 Array::scalarSub(float value, bool isLeft) {
     if (type != mlir::Type::FLOAT) {
         throw std::runtime_error("Array-Add: Array elements are not of type float");
@@ -183,6 +190,7 @@ lingodb::runtime::VarLen32 Array::scalarSub(float value, bool isLeft) {
     return executeScalarOperation<float, ArraySubOperator>(value, isLeft);
 }
 
+template<>
 lingodb::runtime::VarLen32 Array::scalarSub(double value, bool isLeft) {
     if (type != mlir::Type::DOUBLE) {
         throw std::runtime_error("Array-Add: Array elements are not of type double");
@@ -190,6 +198,7 @@ lingodb::runtime::VarLen32 Array::scalarSub(double value, bool isLeft) {
     return executeScalarOperation<double, ArraySubOperator>(value, isLeft);
 }
 
+template<>
 lingodb::runtime::VarLen32 Array::scalarMul(int32_t value) {
     if (type != mlir::Type::INTEGER) {
         throw std::runtime_error("Array-Add: Array elements are not of type integer (32-bit)");
@@ -197,6 +206,7 @@ lingodb::runtime::VarLen32 Array::scalarMul(int32_t value) {
     return executeScalarOperation<int32_t, ArrayMulOperator>(value, true);
 }
 
+template<>
 lingodb::runtime::VarLen32 Array::scalarMul(int64_t value) {
     if (type != mlir::Type::BIGINTEGER) {
         throw std::runtime_error("Array-Add: Array elements are not of type integer (64-bit)");
@@ -204,6 +214,7 @@ lingodb::runtime::VarLen32 Array::scalarMul(int64_t value) {
     return executeScalarOperation<int64_t, ArrayMulOperator>(value, true);
 }
 
+template<>
 lingodb::runtime::VarLen32 Array::scalarMul(float value) {
     if (type != mlir::Type::FLOAT) {
         throw std::runtime_error("Array-Add: Array elements are not of type float");
@@ -211,6 +222,7 @@ lingodb::runtime::VarLen32 Array::scalarMul(float value) {
     return executeScalarOperation<float, ArrayMulOperator>(value, true);
 }
 
+template<>
 lingodb::runtime::VarLen32 Array::scalarMul(double value) {
     if (type != mlir::Type::DOUBLE) {
         throw std::runtime_error("Array-Add: Array elements are not of type double");
@@ -218,6 +230,7 @@ lingodb::runtime::VarLen32 Array::scalarMul(double value) {
     return executeScalarOperation<double, ArrayMulOperator>(value, true);
 }
 
+template<>
 lingodb::runtime::VarLen32 Array::scalarDiv(int32_t value, bool isLeft) {
     if (type != mlir::Type::INTEGER) {
         throw std::runtime_error("Array-Add: Array elements are not of type integer (32-bit)");
@@ -225,6 +238,7 @@ lingodb::runtime::VarLen32 Array::scalarDiv(int32_t value, bool isLeft) {
     return executeScalarOperation<int32_t, ArrayDivOperator>(value, isLeft);
 }
 
+template<>
 lingodb::runtime::VarLen32 Array::scalarDiv(int64_t value, bool isLeft) {
     if (type != mlir::Type::BIGINTEGER) {
         throw std::runtime_error("Array-Add: Array elements are not of type integer (64-bit)");
@@ -232,6 +246,7 @@ lingodb::runtime::VarLen32 Array::scalarDiv(int64_t value, bool isLeft) {
     return executeScalarOperation<int64_t, ArrayDivOperator>(value, isLeft);
 }
 
+template<>
 lingodb::runtime::VarLen32 Array::scalarDiv(float value, bool isLeft) {
     if (type != mlir::Type::FLOAT) {
         throw std::runtime_error("Array-Add: Array elements are not of type float");
@@ -239,6 +254,7 @@ lingodb::runtime::VarLen32 Array::scalarDiv(float value, bool isLeft) {
     return executeScalarOperation<float, ArrayDivOperator>(value, isLeft);
 }
 
+template<>
 lingodb::runtime::VarLen32 Array::scalarDiv(double value, bool isLeft) {
     if (type != mlir::Type::DOUBLE) {
         throw std::runtime_error("Array-Add: Array elements are not of type double");

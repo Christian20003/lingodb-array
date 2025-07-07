@@ -2,7 +2,8 @@
 
 using lingodb::runtime::Array;
 
-lingodb::runtime::VarLen32 Array::fill(int32_t value, Array &structure) {
+template<>
+lingodb::runtime::VarLen32 Array::fill(int32_t &value, Array &structure) {
     if (structure.getNumberElements() == 0) {
         throw std::runtime_error("Array-Fill: Array argument should contain elements");
     }
@@ -15,7 +16,8 @@ lingodb::runtime::VarLen32 Array::fill(int32_t value, Array &structure) {
     }
 }
 
-lingodb::runtime::VarLen32 Array::fill(int64_t value, Array &structure) {
+template<>
+lingodb::runtime::VarLen32 Array::fill(int64_t &value, Array &structure) {
     if (structure.getNumberElements() == 0) {
         throw std::runtime_error("Array-Fill: Array argument should contain elements");
     }
@@ -28,7 +30,8 @@ lingodb::runtime::VarLen32 Array::fill(int64_t value, Array &structure) {
     }
 }
 
-lingodb::runtime::VarLen32 Array::fill(float value, Array &structure) {
+template<>
+lingodb::runtime::VarLen32 Array::fill(float &value, Array &structure) {
     if (structure.getNumberElements() == 0) {
         throw std::runtime_error("Array-Fill: Array argument should contain elements");
     }
@@ -41,7 +44,8 @@ lingodb::runtime::VarLen32 Array::fill(float value, Array &structure) {
     }
 }
 
-lingodb::runtime::VarLen32 Array::fill(double value, Array &structure) {
+template<>
+lingodb::runtime::VarLen32 Array::fill(double &value, Array &structure) {
     if (structure.getNumberElements() == 0) {
         throw std::runtime_error("Array-Fill: Array argument should contain elements");
     }
@@ -54,6 +58,7 @@ lingodb::runtime::VarLen32 Array::fill(double value, Array &structure) {
     }
 }
 
+template<>
 lingodb::runtime::VarLen32 Array::fill(std::string &value, Array &structure) {
     if (structure.getNumberElements() == 0) {
         throw std::runtime_error("Array-Fill: Array argument should contain elements");
