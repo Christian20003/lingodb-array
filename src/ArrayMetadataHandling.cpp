@@ -45,17 +45,34 @@ bool Array::equalMetadata(const uint32_t *other) {
 }
 
 bool Array::isSymmetric() {
+    uint32_t elemLength = this->metadata[0] + this->metadata[1];
     // Iterate over each dimension
     for (size_t i = 1; i <= this->numberDimensions; i++) {
         auto size = getMetadataLength(i);
         auto *start = getFirstEntry(i);
-        uint32_t length = start[2];
+        uint32_t dimLength = i == this->numberDimensions ? start[1] : start[2];
         // Iterate over each metadata entry in a particular dimension
         for (size_t j = 0; j < size * 3; j += 3) {
-            if (length != start[j+2]) {
+            // Proof if a null value exists at the beginning
+            if (j == 0 && start[j] != 0) {
+                return false;
+            }
+            // Proof if a null value exists between two subarray elements
+            if (j != 0 && start[j] != start[j-3] + start[j-2]) {
+                return false;
+            }
+            // Proof if a null value exist at the end
+            if (j + 3 == size * 3 && start[j] + start[j+1] != elemLength) {
+                return false;
+            }
+            // If last dimension, check elemLength instead of dimLength
+            uint32_t value = i == this->numberDimensions ? start[j+1] : start[j+2];
+            if (dimLength != value) {
                 return false;
             }
         }
+        // Set this value for null check
+        elemLength = start[(size-1)*3] + start[(size-1)*3+1];
     }
     return true;
 }

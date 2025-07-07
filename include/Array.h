@@ -607,6 +607,15 @@ class Array {
     VarLen32 scalarDiv(TYPE value, bool isLeft);
 
     /**
+     * This method transposes the arrays dimension. In particular the first two dimensions
+     * will be swapped which leads to a rearrangement of the elements. 
+     * @note An array with a single dimension will be transformed into an array with 
+     * two dimensions. For all other cases, the number of dimensions remains the same.
+     * @return The transposed array as string in array processable format.
+     */
+    VarLen32 transpose();
+
+    /**
      * This function generates an array with the given structure filled with the given
      * value. 
      * 

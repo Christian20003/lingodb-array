@@ -244,3 +244,9 @@ lingodb::runtime::VarLen32 ArrayRuntime::fill(lingodb::runtime::VarLen32 array, 
     Array arrayObj(arrayVal, type);
     return Array::fill(arrayObj);
 }
+
+lingodb::runtime::VarLen32 ArrayRuntime::transpose(lingodb::runtime::VarLen32 array, mlir::Type type) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.transpose();
+}
