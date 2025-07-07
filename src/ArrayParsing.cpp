@@ -8,6 +8,8 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
     uint32_t dimension = 0;
     // Stores the overall dimensions of this array
     uint32_t dimensionsCounter = 0;
+    // Stores the dimension in which the elements are stored
+    uint32_t elementDimension = 0;
     // Stores the overall number of elements (with NULL values)
     uint32_t elementCounter = 0;
     // Index to know which metadata entry should be updated
@@ -28,6 +30,10 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
             // Enter next lower dimension
             case '{':
             {
+                // Check if all elements are at the same dimension level
+                if (elementDimension < dimension+1) {
+                    throw std::runtime_error("Invalid array specification: Inconsistent dimensions - found elements in different dimensions");
+                }
                 // If not in first dimension, update dimension-length of upper dimension
                 if (metadata.size() != 0) {
                     std::get<2>(metadata[metadataIndex]) += 1;
@@ -116,6 +122,7 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
                 if (dimensionsCounter != dimension) {
                     throw std::runtime_error("Invalid array specification: Inconsistent dimensions - found elements in different dimensions");
                 }
+                elementDimension = dimensionsCounter;
                 // Jump over " if present
                 auto end = symbol;
                 if (*symbol == '"') {
