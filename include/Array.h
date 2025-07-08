@@ -188,6 +188,15 @@ class Array {
     VarLen32 executeScalarOperation(TYPE value, bool isLeft);
 
     /**
+     * This method executes a specified activation function (`OP`).
+     * 
+     * @return The result of the activation function as string in array
+     * processable format.
+     */
+    template<class OP>
+    VarLen32 executeActivationFunction();
+
+    /**
      * This function executes a specified binary function `OP` with numeric values.
      * 
      * @param left A pointer to the value of the first parameter of the binary function.
@@ -201,7 +210,20 @@ class Array {
      * @throws `std::runtime_error`: If the array type is not supported in this function.
      */
     template<class OP>
-    static void executeOperation(const uint8_t *left, const uint8_t *right, uint32_t size, char *&buffer, bool scalarLeft, bool scalarRight, mlir::Type type);
+    static void executeBinaryOperation(const uint8_t *left, const uint8_t *right, uint32_t size, char *&buffer, bool scalarLeft, bool scalarRight, mlir::Type type);
+
+    /**
+     * This function executes a specified unary function `OP` with numeric values.
+     * 
+     * @param data A pointer the first element of a list.
+     * @param size The length of the list.
+     * @param buffer A reference to a char pointer which points to the string
+     * that should store the result.
+     * @param type The element type.
+     * @throws `std::runtime_error`: If the array type is not supported in this function.
+     */
+    template<class OP>
+    static void executeUnaryOperation(const uint8_t *data, uint32_t size, char *&buffer, mlir::Type type);
 
     /**
      * This function generates an array with the given value and structure.
@@ -642,6 +664,15 @@ class Array {
      * @return The generated array as string in array processable format.
      */
     static VarLen32 fill(Array &structure);
+
+    /**
+     * This function executes the sigmoid activation function over every element in the array.
+     * 
+     * @throws 'std::runtime_error': If the element type is not numeric.
+     * @return The result of the activation function as string in array
+     * processable format.
+     */
+    VarLen32 sigmoid();
 
     std::string print();
 

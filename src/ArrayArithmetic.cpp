@@ -28,7 +28,7 @@ lingodb::runtime::VarLen32 Array::operator+(Array &other) {
     writeToBuffer(buffer, &this->numberElements, 1);
     writeToBuffer(buffer, this->metadataLengths, this->numberDimensions + getMetadataLength() * 3);
 
-    executeOperation<ArrayAddOperator>(this->elements, other.getElements(), this->numberElements, buffer, false, false, type);
+    executeBinaryOperation<ArrayAddOperator>(this->elements, other.getElements(), this->numberElements, buffer, false, false, type);
 
     copyNulls(buffer, this->nulls, this->numberElements, 0);
 
@@ -61,7 +61,7 @@ lingodb::runtime::VarLen32 Array::operator-(Array &other) {
     writeToBuffer(buffer, &this->numberElements, 1);
     writeToBuffer(buffer, this->metadataLengths, this->numberDimensions + getMetadataLength() * 3);
 
-    executeOperation<ArraySubOperator>(this->elements, other.getElements(), this->numberElements, buffer, false, false, type);
+    executeBinaryOperation<ArraySubOperator>(this->elements, other.getElements(), this->numberElements, buffer, false, false, type);
 
     copyNulls(buffer, this->nulls, this->numberElements, 0);
 
@@ -94,7 +94,7 @@ lingodb::runtime::VarLen32 Array::operator*(Array &other) {
     writeToBuffer(buffer, &this->numberElements, 1);
     writeToBuffer(buffer, this->metadataLengths, this->numberDimensions + getMetadataLength() * 3);
 
-    executeOperation<ArrayMulOperator>(this->elements, other.getElements(), this->numberElements, buffer, false, false, type);
+    executeBinaryOperation<ArrayMulOperator>(this->elements, other.getElements(), this->numberElements, buffer, false, false, type);
 
     copyNulls(buffer, this->nulls, this->numberElements, 0);
 
@@ -127,7 +127,7 @@ lingodb::runtime::VarLen32 Array::operator/(Array &other) {
     writeToBuffer(buffer, &this->numberElements, 1);
     writeToBuffer(buffer, this->metadataLengths, this->numberDimensions + getMetadataLength() * 3);
 
-    executeOperation<ArrayDivOperator>(this->elements, other.getElements(), this->numberElements, buffer, false, false, type);
+    executeBinaryOperation<ArrayDivOperator>(this->elements, other.getElements(), this->numberElements, buffer, false, false, type);
 
     copyNulls(buffer, this->nulls, this->numberElements, 0);
 

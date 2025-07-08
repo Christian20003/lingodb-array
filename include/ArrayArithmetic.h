@@ -108,4 +108,25 @@ struct ArrayDivOperator{
 
 };
 
+struct ArraySigmoidOperator {
+
+    /**
+     * This function executes the sigmoid function on a list of values of type `TYPE` and
+     * copies the result in the given buffer.
+     * 
+     * @param data A pointer to the first entry of a list of values.
+     * @param size The length of the given list.
+     * @param buffer A reference to a char pointer which points to the string
+     * that should store the result.
+     */
+    template <class TYPE>
+	static void Operator(const TYPE *data, uint32_t size, char *&buffer) {
+		for(size_t i = 0; i < size; i++) {
+			TYPE result = 1 / (1 + std::exp(-(*data++)));
+            memcpy(buffer, &result, sizeof(TYPE));
+            buffer += sizeof(TYPE);
+		}
+	}
+};
+
 }

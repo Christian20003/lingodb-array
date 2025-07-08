@@ -31,7 +31,7 @@ int main() {
     // VarLen32 op = ArrayRuntime::div(var3, var3, mlir::Type::INTEGER, mlir::Type::INTEGER);
     // VarLen32 op = ArrayRuntime::scalarSub(var3, mlir::Type::INTEGER, 5, true);
     // VarLen32 op = ArrayRuntime::fill(var3, mlir::Type::INTEGER);
-    VarLen32 op = ArrayRuntime::transpose(var1, mlir::Type::INTEGER);
+    VarLen32 op = ArrayRuntime::sigmoid(var1, mlir::Type::INTEGER);
     std::string array = op.str();
     //std::cout << array << std::endl;
     Array result(array, mlir::Type::INTEGER);

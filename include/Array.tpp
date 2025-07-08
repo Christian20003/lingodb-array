@@ -23,13 +23,30 @@ lingodb::runtime::VarLen32 Array::executeScalarOperation(TYPE value, bool isLeft
     writeToBuffer(buffer, this->metadataLengths, this->numberDimensions + getMetadataLength() * 3);
     const uint8_t *left = isLeft ? reinterpret_cast<uint8_t*>(&value) : this->elements;
     const uint8_t *right = isLeft ? this->elements : reinterpret_cast<uint8_t*>(&value);
-    executeOperation<OP>(left, right, this->numberElements, buffer, isLeft, !isLeft, type);
+    executeBinaryOperation<OP>(left, right, this->numberElements, buffer, isLeft, !isLeft, type);
     copyNulls(buffer, this->nulls, this->metadata[1], 0);
     return VarLen32::fromString(result);
 }
 
 template<class OP>
-void Array::executeOperation(const uint8_t *left, const uint8_t *right, uint32_t size, char *&buffer, bool scalarLeft, bool scalarRight, mlir::Type type) {
+lingodb::runtime::VarLen32 Array::executeActivationFunction() {
+    // Define result string size (does not change)
+    std::string result;
+    auto size = getStringSize(this->numberDimensions, this->numberElements, getMetadataLength(), getNullBytes(this->metadata[1]), 0, type);
+    result.resize(size);
+    char *buffer = result.data();
+    // Write every content to the result (does not change except elements)
+    writeToBuffer(buffer, &this->numberDimensions, 1);
+    writeToBuffer(buffer, &this->numberElements, 1);
+    writeToBuffer(buffer, this->metadataLengths, this->numberDimensions + getMetadataLength() * 3);
+    const uint8_t *data = this->elements;
+    executeUnaryOperation<OP>(data, this->numberElements, buffer, type);
+    copyNulls(buffer, this->nulls, this->metadata[1], 0);
+    return VarLen32::fromString(result);
+}
+
+template<class OP>
+void Array::executeBinaryOperation(const uint8_t *left, const uint8_t *right, uint32_t size, char *&buffer, bool scalarLeft, bool scalarRight, mlir::Type type) {
     if (type == mlir::Type::INTEGER) {
         auto *leftVal = reinterpret_cast<const int32_t*>(left);
         auto *rightVal = reinterpret_cast<const int32_t*>(right);
@@ -46,6 +63,25 @@ void Array::executeOperation(const uint8_t *left, const uint8_t *right, uint32_t
         auto *leftVal = reinterpret_cast<const double*>(left);
         auto *rightVal = reinterpret_cast<const double*>(right);
         OP::Operator(leftVal, rightVal, size, buffer, scalarLeft, scalarRight);
+    } else {
+        throw std::runtime_error("Array-Type is not supported");
+    }
+}
+
+template<class OP>
+void Array::executeUnaryOperation(const uint8_t *data, uint32_t size, char *&buffer, mlir::Type type) {
+    if (type == mlir::Type::INTEGER) {
+        auto *values = reinterpret_cast<const int32_t*>(data);
+        OP::Operator(values, size, buffer);
+    } else if (type == mlir::Type::BIGINTEGER) {
+        auto *values = reinterpret_cast<const int64_t*>(data);
+        OP::Operator(values, size, buffer);
+    } else if (type == mlir::Type::FLOAT) {
+        auto *values = reinterpret_cast<const float*>(data);
+        OP::Operator(values, size, buffer);
+    } else if (type == mlir::Type::DOUBLE) {
+        auto *values = reinterpret_cast<const double*>(data);
+        OP::Operator(values, size, buffer);
     } else {
         throw std::runtime_error("Array-Type is not supported");
     }
