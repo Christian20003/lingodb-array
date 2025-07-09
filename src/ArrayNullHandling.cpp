@@ -2,6 +2,10 @@
 
 using lingodb::runtime::Array;
 
+const uint8_t* Array::getNulls() {
+    return this->nulls;
+}
+
 void Array::copyNulls(char *&buffer, std::vector<bool> &nulls) {
     // Iterate over each vector element
     for (size_t i = 0; i < nulls.size(); i++) {

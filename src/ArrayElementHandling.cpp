@@ -2,6 +2,59 @@
 
 using lingodb::runtime::Array;
 
+const uint8_t* Array::getElements() {
+    return this->elements;
+}
+
+uint32_t Array::getNumberElements(bool withNulls) {
+    if (withNulls) {
+        return this->metadata[1];
+    }
+    return this->numberElements;
+}
+
+uint32_t Array::getStringLength() {
+    if (type != mlir::Type::STRING) {
+        return 0;
+    }
+    uint32_t result = 0;
+    uint32_t *stringLengths = reinterpret_cast<uint32_t*>(this->elements);
+    for (size_t i = 0; i < this->numberElements; i++) {
+        result += stringLengths[i];
+    }
+    return result;
+}
+
+uint32_t Array::getStringLength(uint32_t position) {
+    if (this->numberElements <= position) {
+        throw std::runtime_error("Array-Element position does not exist");
+    }
+    if (type != mlir::Type::STRING) {
+        return 0;
+    }
+    uint32_t *stringLengths = reinterpret_cast<uint32_t*>(this->elements);
+    return stringLengths[position];
+}
+
+int32_t Array::getHighestPosition() {
+    if (this->numberElements == 0) {
+        return 0;
+    }
+    if (type == mlir::Type::INTEGER) {
+        return getMaxIndex<int32_t>();
+    } else if (type == mlir::Type::BIGINTEGER) {
+        return getMaxIndex<int64_t>();
+    } else if (type == mlir::Type::FLOAT) {
+        return getMaxIndex<float>();
+    } else if (type == mlir::Type::DOUBLE) {
+        return getMaxIndex<double>();
+    } else if (type == mlir::Type::STRING) {
+        return getMaxIndex<uint32_t>();
+    } else {
+        throw std::runtime_error("Array-HighestPosition: Given type is not supported in arrays");
+    }
+}
+
 void Array::copyElements(char *&buffer) {
     if (type == mlir::Type::INTEGER) {
         writeToBuffer(buffer, reinterpret_cast<int32_t*>(this->elements), this->numberElements);

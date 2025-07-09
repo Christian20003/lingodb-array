@@ -2,6 +2,25 @@
 
 using lingodb::runtime::Array;
 
+uint32_t Array::getMetadataLength() {
+    uint32_t result = 0;
+    for (size_t i = 0; i < this->numberDimensions; i++) {
+        result += this->metadataLengths[i];
+    }
+    return result;
+}
+
+uint32_t Array::getMetadataLength(uint32_t dimension) {
+    if (dimension > this->numberDimensions || dimension == 0) {
+        throw std::runtime_error("Array-Dimension does not exist");
+    }
+    return this->metadataLengths[dimension-1];
+}
+
+const uint32_t* Array::getMetadata() {
+    return this->metadata;
+}
+
 const uint32_t *Array::getFirstEntry(uint32_t dimension) {
     if (dimension > this->numberDimensions) {
         throw std::runtime_error("Requested dimension does not exist");

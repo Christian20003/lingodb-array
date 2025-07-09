@@ -213,29 +213,5 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
             writer += element.length();
         }
     }
-
-    // Currently only for debugging purposes
-    /* std::cout << dimensionsCounter << std::endl;
-    std::cout << elementCounter << std::endl;
-    for (auto &entry : metadataLengths) {
-        std::cout << entry << ",";
-    }
-    std::cout << std::endl;
-    for (auto &entry : metadata) {
-        std::cout << "{" << std::get<0>(entry) << ":" << std::get<1>(entry) << ":" << std::get<2>(entry) << "}";
-    }
-    std::cout << std::endl;
-    for (auto &entry : elements) {
-        std::cout << entry << ",";
-    }
-    std::cout << std::endl;
-    for (auto entry : nulls) {
-        std::cout << entry << ",";
-    }
-    std::cout << std::endl;
-    for (auto entry : stringLengths) {
-        std::cout << entry << ",";
-    }
-    std::cout << std::endl; */
 }
 

@@ -4,7 +4,6 @@ add_library(ArrayBasics
     ArrayElementHandling.cpp
     ArrayMetadataHandling.cpp
     ArrayNullHandling.cpp
-    ArrayGetter.cpp
     ArrayParsing.cpp
     ArrayAppend.cpp
     ArraySlice.cpp
@@ -14,6 +13,5 @@ add_library(ArrayBasics
     ArrayTranspose.cpp
     ArrayFill.cpp
     ArrayPrint.cpp
-    ArrayEmpty.cpp
     ArrayRuntime.cpp
 )
