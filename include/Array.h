@@ -249,6 +249,9 @@ class Array {
     template<class ARRAYTYPE>
     static VarLen32 generate(Array &structure, mlir::Type type);
 
+    template<class TYPE>
+    int32_t getMaxIndex();
+
     /**
      * This method transforms the array into its string representation (for printing).
      * This method will be called recursively over each metadata entry.
@@ -454,6 +457,8 @@ class Array {
      *                      `nullptr`.
      */
     const uint32_t* getChildEntry(const uint32_t *entry, uint32_t dimension);
+
+    int32_t getHighestPosition();
 
     /**
      * This method proofs if the given metadata pointer has the same structure

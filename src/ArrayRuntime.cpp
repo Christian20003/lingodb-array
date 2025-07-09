@@ -268,3 +268,9 @@ lingodb::runtime::VarLen32 ArrayRuntime::matrixMul(
         Array rightArray(rightVal, rightType);
         return leftArray.matrixMul(rightArray);
 }
+
+int32_t ArrayRuntime::getHighestPosition(lingodb::runtime::VarLen32 array, mlir::Type type) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.getHighestPosition();
+}

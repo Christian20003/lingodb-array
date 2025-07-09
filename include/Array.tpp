@@ -251,3 +251,19 @@ lingodb::runtime::VarLen32 Array::generate(Array &structure, mlir::Type type) {
 
     return VarLen32::fromString(result);
 }
+
+template<class TYPE>
+int32_t Array::getMaxIndex() {
+    const TYPE *elements = reinterpret_cast<const TYPE*>(this->elements);
+    int32_t result = -1;
+
+    for (uint32_t i = 0; i < this->metadata[1]; i++) {
+        if (isNull(i)) continue;
+        uint32_t position = getElementPosition(i);
+        if (result == -1) result = i;
+        uint32_t resultPosition = getElementPosition(result);
+        if (elements[position] > elements[resultPosition]) result = i;
+    }
+
+    return result;
+}

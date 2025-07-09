@@ -55,6 +55,8 @@ namespace lingodb::runtime {
 
         static VarLen32 sigmoid(VarLen32 array, mlir::Type type);
 
+        static int32_t getHighestPosition(VarLen32 array, mlir::Type type);
+
     };
 
 }

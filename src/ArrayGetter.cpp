@@ -101,3 +101,22 @@ const uint32_t* Array::getMetadata() {
 const uint8_t* Array::getNulls() {
     return this->nulls;
 }
+
+int32_t Array::getHighestPosition() {
+    if (this->numberElements == 0) {
+        return 0;
+    }
+    if (type == mlir::Type::INTEGER) {
+        return getMaxIndex<int32_t>();
+    } else if (type == mlir::Type::BIGINTEGER) {
+        return getMaxIndex<int64_t>();
+    } else if (type == mlir::Type::FLOAT) {
+        return getMaxIndex<float>();
+    } else if (type == mlir::Type::DOUBLE) {
+        return getMaxIndex<double>();
+    } else if (type == mlir::Type::STRING) {
+        return getMaxIndex<uint32_t>();
+    } else {
+        throw std::runtime_error("Array-HighestPosition: Given type is not supported in arrays");
+    }
+}
