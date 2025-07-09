@@ -40,6 +40,13 @@ bool Array::isNumericType() {
     return false;
 }
 
+bool Array::isFloatingPointType() {
+    if (type == mlir::Type::FLOAT || type == mlir::Type::DOUBLE) {
+        return true;
+    }
+    return false;
+}
+
 void Array::printData() {
     size_t metadataLen = 0;
     std::cout << "METADATA-LENGTHS:" << std::endl;

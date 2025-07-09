@@ -256,3 +256,15 @@ lingodb::runtime::VarLen32 ArrayRuntime::sigmoid(lingodb::runtime::VarLen32 arra
     Array arrayObj(arrayVal, type);
     return arrayObj.sigmoid();
 }
+
+lingodb::runtime::VarLen32 ArrayRuntime::matrixMul(
+    lingodb::runtime::VarLen32 left,
+    lingodb::runtime::VarLen32 right,
+    mlir::Type leftType,
+    mlir::Type rightType) {
+        std::string leftVal = left.str();
+        std::string rightVal = right.str();
+        Array leftArray(leftVal, leftType);
+        Array rightArray(rightVal, rightType);
+        return leftArray.matrixMul(rightArray);
+}

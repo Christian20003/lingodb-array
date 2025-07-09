@@ -42,6 +42,8 @@ namespace lingodb::runtime {
         static VarLen32 scalarDiv(VarLen32 array, mlir::Type type, float value, bool isLeft);
         static VarLen32 scalarDiv(VarLen32 array, mlir::Type type, double value, bool isLeft);
 
+        static VarLen32 matrixMul(VarLen32 left, VarLen32 right, mlir::Type leftType, mlir::Type rightType);
+
         static VarLen32 fill(int32_t value, VarLen32 array, mlir::Type type);
         static VarLen32 fill(int64_t value, VarLen32 array, mlir::Type type);
         static VarLen32 fill(float value, VarLen32 array, mlir::Type type);

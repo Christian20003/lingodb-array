@@ -261,3 +261,72 @@ lingodb::runtime::VarLen32 Array::scalarDiv(double value, bool isLeft) {
     }
     return executeScalarOperation<double, ArrayDivOperator>(value, isLeft);
 }
+
+lingodb::runtime::VarLen32 Array::matrixMul(Array &other) {
+    if (!isFloatingPointType()) {
+        throw std::runtime_error("Array-MatrixMul: Given element type must be a floating point type");
+    }
+    if (type != other.getType()) {
+        throw std::runtime_error("Array-MatrixMul: Arrays have different types");
+    }
+    if (hasNullValue() || other.hasNullValue()) {
+        throw std::runtime_error("Array-MatrixMul: NULL values are not allowed");
+    }
+    if (hasEmptyValue() || other.hasEmptyValue()) {
+        throw std::runtime_error("Array-MatrixMul: Empty array elements are not allowed");
+    }
+    if (!isSymmetric() || !other.isSymmetric()) {
+        throw std::runtime_error("Array-MatrixMul: This function allows only symmetric arrays");
+    }
+    uint32_t otherDimension = other.getDimension();
+    const uint32_t *otherMetadata = other.getMetadata();
+    if (this->numberDimensions > 2 || otherDimension > 2) {
+        throw std::runtime_error("Array-MatrixMul: This function allows only up to 2 dimensional arrays");
+    }
+
+    uint32_t rowsA = this->numberDimensions == 1 ? this->metadata[1] : this->metadata[2];
+    uint32_t colsA = this->numberDimensions == 1 ? 1 : this->metadata[4];
+    uint32_t rowsB = otherDimension == 1 ? otherMetadata[1] : otherMetadata[2];
+    uint32_t colsB = otherDimension == 1 ? 1 : otherMetadata[4];
+
+    if (colsA != rowsB) {
+        throw std::runtime_error("Array-MatrixMul: Array-structures are not compatible for this function");
+    }
+
+    uint32_t dimension = 2;
+    uint32_t elements = rowsA * colsB;
+    std::vector<uint32_t> metadataLengths{1, rowsA};
+    std::vector<uint32_t> metadata;
+    metadata.reserve(3*rowsA+3);
+
+    metadata.push_back(0);
+    metadata.push_back(elements);
+    metadata.push_back(rowsA);
+    for (size_t i = 0; i < rowsA; i++) {
+        metadata.push_back(i*colsB);
+        metadata.push_back(colsB);
+        metadata.push_back(0);
+    }
+
+    std::string result;
+    auto size = getStringSize(dimension, elements, 1+rowsA, getNullBytes(elements), 0, type);
+    result.resize(size);
+    char *buffer = result.data();
+
+    writeToBuffer(buffer, &dimension, 1);
+    writeToBuffer(buffer, &elements, 1);
+    writeToBuffer(buffer, metadataLengths.data(), metadataLengths.size());
+    writeToBuffer(buffer, metadata.data(), metadata.size());
+
+    if (type == mlir::Type::FLOAT) {
+        auto *leftVal = reinterpret_cast<const float*>(this->elements);
+        auto *rightVal = reinterpret_cast<const float*>(other.getElements());
+        MatrixMultiplicationOperator::Operator(leftVal, rightVal, rowsA, rowsB, colsB, buffer);
+    } else {
+        auto *leftVal = reinterpret_cast<const double*>(this->elements);
+        auto *rightVal = reinterpret_cast<const double*>(other.getElements());
+        MatrixMultiplicationOperator::Operator(leftVal, rightVal, rowsA, rowsB, colsB, buffer);
+    }
+
+    return VarLen32::fromString(result);
+}

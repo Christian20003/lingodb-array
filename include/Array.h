@@ -494,6 +494,13 @@ class Array {
     bool isNumericType();
 
     /**
+     * This method proofs if the element type is a floating point type.
+     * 
+     * @return `True` if the element type is a floating point type, otherwise `False`.
+     */
+    bool isFloatingPointType();
+
+    /**
      * This function appends a structure or value of type `TYPE` to the array. Thereby the content
      * will be appended to the last array element. This depends on the dimension structure of the
      * parameter.
@@ -627,6 +634,21 @@ class Array {
      */
     template<class TYPE>
     VarLen32 scalarDiv(TYPE value, bool isLeft);
+
+    /**
+     * This method executes matrix multiplication.
+     * 
+     * @param other The second matrix representing the right operand.
+     * @throws `std::runtime_error`: If one of the following points is true:
+     * - If the array element type is not a floating point type.
+     * - If both arrays have different types.
+     * - If NULL values are identified.
+     * - If empty array structures are identified.
+     * - If both arrays are not symmetric in each dimension.
+     * - If both array structures does not allow matrix multiplication.
+     * @return The result array as string in array processable format.
+     */
+    VarLen32 matrixMul(Array &other);
 
     /**
      * This method transposes the arrays dimension. In particular the first two dimensions

@@ -23,6 +23,14 @@ int main() {
     std::string string4 = "Hello World";
     VarLen32 var4 = VarLen32::fromString(string4);
     // var4 = ArrayRuntime::fromString(var4, mlir::Type::STRING);
+
+    std::string string5 = "{2.5,6.5,7.2}";
+    VarLen32 var5 = VarLen32::fromString(string5);
+    var5 = ArrayRuntime::fromString(var5, mlir::Type::FLOAT);
+
+    std::string string6 = "{{2.5,8.2,5.2}}";
+    VarLen32 var6 = VarLen32::fromString(string6);
+    var6 = ArrayRuntime::fromString(var6, mlir::Type::FLOAT);
     
     // VarLen32 op = ArrayRuntime::append(var1, var3, mlir::Type::INTEGER, mlir::Type::INTEGER);
     // VarLen32 op = ArrayRuntime::append(var1, mlir::Type::INTEGER, 4);
@@ -31,10 +39,11 @@ int main() {
     // VarLen32 op = ArrayRuntime::div(var3, var3, mlir::Type::INTEGER, mlir::Type::INTEGER);
     // VarLen32 op = ArrayRuntime::scalarSub(var3, mlir::Type::INTEGER, 5, true);
     // VarLen32 op = ArrayRuntime::fill(var3, mlir::Type::INTEGER);
-    VarLen32 op = ArrayRuntime::sigmoid(var1, mlir::Type::INTEGER);
+    // VarLen32 op = ArrayRuntime::sigmoid(var1, mlir::Type::INTEGER);
+    VarLen32 op = ArrayRuntime::matrixMul(var6, var5, mlir::Type::FLOAT, mlir::Type::FLOAT);
     std::string array = op.str();
     //std::cout << array << std::endl;
-    Array result(array, mlir::Type::INTEGER);
+    Array result(array, mlir::Type::FLOAT);
     std::cout << result.print() << std::endl;
     return 0;
 }
