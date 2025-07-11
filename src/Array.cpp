@@ -14,20 +14,21 @@ Array::Array(std::string &array, mlir::Type type) {
     data += sizeof(uint32_t);
     this->numberElements = *reinterpret_cast<uint32_t*>(data);
     data += sizeof(uint32_t);
+    this->indices = reinterpret_cast<int32_t*>(data);
+    data += sizeof(int32_t) * this->numberDimensions;
     this->metadataLengths = reinterpret_cast<uint32_t*>(data);
     data += this->numberDimensions * sizeof(uint32_t);
     this->metadata = reinterpret_cast<uint32_t*>(data);
     for (size_t i = 0; i < this->numberDimensions; i++) {
-        data += this->metadataLengths[i] * 3 * sizeof(uint32_t);
+        data += this->metadataLengths[i] * 2 * sizeof(uint32_t);
     }
     this->elements = reinterpret_cast<uint8_t*>(data);
     data += this->numberElements * getTypeSize(type);
     this->nulls = reinterpret_cast<uint8_t*>(data);
-    data += getNullBytes(this->metadata[1]);
+    data += getNullBytes(getNumberElements(true));
     this->strings = data;
     this->type = type;
     if (type == mlir::Type::INTEGER) {
-        auto *test = reinterpret_cast<int32_t*>(elements);
         printData();
     }
 }
@@ -68,7 +69,7 @@ bool Array::isFloatingPointType() {
 }
 
 size_t Array::getStringSize(uint32_t dimensions, uint32_t numberElements, uint32_t metadataSize, uint32_t nullSize, uint32_t stringSize, mlir::Type type) {
-    size_t size = sizeof(uint32_t) * 2 + dimensions * sizeof(uint32_t) + metadataSize * 3 * sizeof(uint32_t);
+    size_t size = sizeof(uint32_t) * 2 + dimensions * sizeof(int32_t) + dimensions * sizeof(uint32_t) + metadataSize * 2 * sizeof(uint32_t);
     if (type == mlir::Type::INTEGER) {
         size += numberElements * sizeof(int32_t);
     } else if (type == mlir::Type::BIGINTEGER || type == mlir::Type::STRING) {
@@ -111,6 +112,11 @@ uint32_t Array::getDimension() {
 
 void Array::printData() {
     size_t metadataLen = 0;
+    std::cout << "INDICES:" << std::endl;
+    for (size_t i = 0; i < this->numberDimensions; i++) {
+        std::cout << this->indices[i] << ",";
+    }
+    std::cout << std::endl;
     std::cout << "METADATA-LENGTHS:" << std::endl;
     for (size_t i = 0; i < this->numberDimensions; i++) {
         std::cout << this->metadataLengths[i] << ",";
@@ -118,8 +124,8 @@ void Array::printData() {
     }
     std::cout << std::endl;
     std::cout << "METADATA-ENTRIES:" << std::endl;
-    for (size_t i = 0; i < metadataLen * 3; i += 3) {
-        std::cout << "{" << this->metadata[i] << ":" <<this->metadata[i+1] << ":" << this->metadata[i+2] << "},"; 
+    for (size_t i = 0; i < metadataLen * 2; i += 2) {
+        std::cout << "{" << this->metadata[i] << ":" <<this->metadata[i+1] << "},"; 
     }
     std::cout << std::endl;
     printNulls();

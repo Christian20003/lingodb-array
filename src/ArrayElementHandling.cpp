@@ -8,7 +8,8 @@ const uint8_t* Array::getElements() {
 
 uint32_t Array::getNumberElements(bool withNulls) {
     if (withNulls) {
-        return this->metadata[1];
+        auto size = getMetadataLength();
+        return this->metadata[size*2-2] + this->metadata[size*2-1];
     }
     return this->numberElements;
 }

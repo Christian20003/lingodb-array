@@ -48,6 +48,7 @@ class Array {
     private:
     uint32_t numberDimensions;
     uint32_t numberElements;
+    int32_t *indices;
     uint32_t *metadataLengths;
     uint32_t *metadata;
     uint8_t *elements;
@@ -82,6 +83,8 @@ class Array {
      */
     template<class TYPE>
     static void castAndCopyElement(char *&buffer, std::string &value);
+
+    static uint32_t parseHeader(std::string &array, std::vector<int32_t> &indices, std::vector<int32_t> &lengths);
 
     /**
      * This function calculates the necessary size of a string to store all data of the array.
