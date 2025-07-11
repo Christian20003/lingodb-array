@@ -85,16 +85,13 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
                         }
                     }
                 }
-                
+                position--;
                 // Determine the index of the last metadata entry that corresponds to the upper dimension
                 auto modifyPosition = metadata.begin();
                 for (size_t i = 0; i < metadataLengths.size(); i++) {
-                    if (i + 1 > position) {
-                        break;
-                    }
-                    modifyPosition += metadataLengths[i];
+                    if (i == position) break;
+                    modifyPosition += metadataLengths[i] * 2;
                 }
-                position--;
                 if (modifyPosition != metadata.begin()) {
                     modifyPosition -= 2;
                     metadataIndex = modifyPosition - metadata.begin();
@@ -235,7 +232,7 @@ uint32_t Array::parseHeader(std::string &array, std::vector<int32_t> &indices, s
     bool foundHeader = false;
     try {
         // Iterate over each character
-        while (symbol < array.end() && *symbol != '=') {
+        while (symbol < array.end() && *symbol != '=' && *symbol != '{') {
             switch (*symbol) {
                 // First character should be a '['
                 case '[':
