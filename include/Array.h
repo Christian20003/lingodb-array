@@ -56,6 +56,8 @@ class Array {
     char *strings;
     mlir::Type type;
 
+    static const uint32_t entrySize = 2;
+
 /*##########################################################################################################################################################  
  *                                                              PRIVATE METHODS
  *##########################################################################################################################################################*/    
@@ -246,6 +248,8 @@ class Array {
     template<class TYPE>
     int32_t getMaxIndex();
 
+    uint32_t getMaxDimensionSize(uint32_t dimension);
+
     /**
      * This method transforms the array into its string representation (for printing).
      * This method will be called recursively over each metadata entry.
@@ -256,7 +260,9 @@ class Array {
      * @throws `std::runtime_error`: If the provided array structure is
      * not valid (processable).
      */
-    void transform(std::string &target, const uint32_t *entry, uint32_t dimension);
+    void printArray(std::string &target, const uint32_t *entry, uint32_t dimension);
+
+    void printHeader(std::string &target);
 
     /**
      * This method proofs if the given position is a NULL value.

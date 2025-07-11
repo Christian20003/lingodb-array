@@ -27,7 +27,7 @@ const uint32_t *Array::getFirstEntry(uint32_t dimension) {
     }
     uint32_t *child = this->metadata;
     for (size_t i = 0; i < dimension - 1; i++) {
-        child += this->metadataLengths[i] * 3;
+        child += this->metadataLengths[i] * entrySize;
     }
     return child;
 }
@@ -36,17 +36,17 @@ const uint32_t *Array::getChildEntry(const uint32_t *entry, uint32_t dimension) 
     if (dimension > this->numberDimensions) {
         throw std::runtime_error("Requested array element does not exist");
     }
-    if (entry[2] == 0) {
+    if (entry[1] == 0) {
         return nullptr;
     }
     const uint32_t *child = getFirstEntry(dimension);
     uint32_t ignore = 0;
     uint32_t length = this->metadataLengths[dimension-1];
-    for (size_t i = 0; i <= length * 3; i += 3) {
+    for (size_t i = 0; i <= length * entrySize; i += entrySize) {
         if (entry == &child[i]) {
-            return child += length * 3 + ignore * 3;
+            return child += length * entrySize + ignore * entrySize;
         } else {
-            ignore += child[i+2];
+            ignore += child[i+1];
         }
     }
     return nullptr;

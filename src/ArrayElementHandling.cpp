@@ -9,9 +9,22 @@ const uint8_t* Array::getElements() {
 uint32_t Array::getNumberElements(bool withNulls) {
     if (withNulls) {
         auto size = getMetadataLength();
-        return this->metadata[size*2-2] + this->metadata[size*2-1];
+        return this->metadata[size*entrySize-2] + this->metadata[size*entrySize-1];
     }
     return this->numberElements;
+}
+
+uint32_t Array::getMaxDimensionSize(uint32_t dimension) {
+    if (this->numberDimensions < dimension) {
+        throw std::runtime_error("Requested array dimension does not exist");
+    }
+    auto length = this->metadataLengths[dimension-1];
+    auto *entry = getFirstEntry(dimension);
+    uint32_t result = 0;
+    for (uint32_t i = 0; i < length * entrySize; i += entrySize) {
+        if (entry[i+1] > result) result = entry[i+1];
+    }
+    return result;
 }
 
 uint32_t Array::getStringLength() {
@@ -170,7 +183,8 @@ void Array::castAndCopyElement<std::string>(char *&buffer, std::string &value) {
 }
 
 uint32_t Array::getElementPosition(uint32_t position) {
-    if (this->metadata[1] <= position) {
+    auto totalElements = getNumberElements(true);
+    if (totalElements <= position) {
         throw std::runtime_error("Array-Element does not exist");
     }
     return position - countNulls(position);

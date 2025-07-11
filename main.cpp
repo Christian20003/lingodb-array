@@ -12,7 +12,7 @@ int main() {
     VarLen32 var1 = VarLen32::fromString(string1);
     var1 = ArrayRuntime::fromString(var1, mlir::Type::INTEGER);
     
-    /* std::string string2 = "{{{\"Hello World\",\"A new world is born\",\"LingoDB is a Database\"}},{{\"Hello World\",\"A new world is born\",\"LingoDB is a Database\"},{\"Hello World\",\"A new world is born\",\"LingoDB is a Database\"}}}";
+    std::string string2 = "{{{\"Hello World\",\"A new world is born\",\"LingoDB is a Database\"}},{{\"Hello World\",\"A new world is born\",\"LingoDB is a Database\"},{\"Hello World\",\"A new world is born\",\"LingoDB is a Database\"}}}";
     VarLen32 var2 = VarLen32::fromString(string2);
     var2 = ArrayRuntime::fromString(var2, mlir::Type::STRING);
     
@@ -30,7 +30,7 @@ int main() {
 
     std::string string6 = "{{2.5,8.2,5.2}}";
     VarLen32 var6 = VarLen32::fromString(string6);
-    var6 = ArrayRuntime::fromString(var6, mlir::Type::FLOAT); */
+    var6 = ArrayRuntime::fromString(var6, mlir::Type::FLOAT);
     
     // VarLen32 op = ArrayRuntime::append(var1, var3, mlir::Type::INTEGER, mlir::Type::INTEGER);
     // VarLen32 op = ArrayRuntime::append(var1, mlir::Type::INTEGER, 4);
@@ -45,7 +45,7 @@ int main() {
     // int pos = ArrayRuntime::getHighestPosition(var2, mlir::Type::STRING);
     //std::cout << array << std::endl;
     Array result(array, mlir::Type::INTEGER);
-    // std::cout << result.print() << std::endl;
+    std::cout << result.print() << std::endl;
     // std::cout << pos << std::endl;
     return 0;
 }

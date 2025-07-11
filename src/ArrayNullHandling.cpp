@@ -67,7 +67,8 @@ bool Array::isNull(uint32_t position) {
 
 uint32_t Array::countNulls(uint32_t maxPosition) {
     // Check if position is valid
-    if (this->metadata[1] <= maxPosition) {
+    auto totalElements = getNumberElements(true);
+    if (totalElements <= maxPosition) {
         throw std::runtime_error("Array-Element does not exist");
     }
     // Iterate over each position until maxPosition
