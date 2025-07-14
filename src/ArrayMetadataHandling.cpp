@@ -2,6 +2,19 @@
 
 using lingodb::runtime::Array;
 
+uint32_t Array::getOffset(const uint32_t *width) {
+    const uint32_t *start = getFirstEntry(this->numberDimensions);
+    uint32_t offset = 0;
+    for (uint32_t i = 0; i < this->metadataLengths[this->numberDimensions-1]; i++) {
+        if (start + i == width) {
+            return offset;
+        } else {
+            offset += start[i];
+        }
+    }
+    throw std::runtime_error("Requested width does not exist");
+}
+
 uint32_t Array::getMetadataLength() {
     uint32_t result = 0;
     for (size_t i = 0; i < this->numberDimensions; i++) {
@@ -27,7 +40,7 @@ const uint32_t *Array::getFirstEntry(uint32_t dimension) {
     }
     uint32_t *child = this->metadata;
     for (size_t i = 0; i < dimension - 1; i++) {
-        child += this->metadataLengths[i] * entrySize;
+        child += this->metadataLengths[i];
     }
     return child;
 }
@@ -36,17 +49,17 @@ const uint32_t *Array::getChildEntry(const uint32_t *entry, uint32_t dimension) 
     if (dimension > this->numberDimensions) {
         throw std::runtime_error("Requested array element does not exist");
     }
-    if (entry[1] == 0) {
+    if (entry[0] == 0) {
         return nullptr;
     }
     const uint32_t *child = getFirstEntry(dimension);
     uint32_t ignore = 0;
     uint32_t length = this->metadataLengths[dimension-1];
-    for (size_t i = 0; i <= length * entrySize; i += entrySize) {
+    for (size_t i = 0; i <= length; i++) {
         if (entry == &child[i]) {
-            return child += length * entrySize + ignore * entrySize;
+            return child += length + ignore;
         } else {
-            ignore += child[i+1];
+            ignore += child[i];
         }
     }
     return nullptr;

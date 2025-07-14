@@ -20,7 +20,7 @@ Array::Array(std::string &array, mlir::Type type) {
     data += this->numberDimensions * sizeof(uint32_t);
     this->metadata = reinterpret_cast<uint32_t*>(data);
     for (size_t i = 0; i < this->numberDimensions; i++) {
-        data += this->metadataLengths[i] * 2 * sizeof(uint32_t);
+        data += this->metadataLengths[i] * sizeof(uint32_t);
     }
     this->elements = reinterpret_cast<uint8_t*>(data);
     data += this->numberElements * getTypeSize(type);
@@ -69,7 +69,7 @@ bool Array::isFloatingPointType() {
 }
 
 size_t Array::getStringSize(uint32_t dimensions, uint32_t numberElements, uint32_t metadataSize, uint32_t nullSize, uint32_t stringSize, mlir::Type type) {
-    size_t size = sizeof(uint32_t) * 2 + dimensions * sizeof(int32_t) + dimensions * sizeof(uint32_t) + metadataSize * 2 * sizeof(uint32_t);
+    size_t size = sizeof(uint32_t) * 2 + dimensions * sizeof(int32_t) + dimensions * sizeof(uint32_t) + metadataSize * sizeof(uint32_t);
     if (type == mlir::Type::INTEGER) {
         size += numberElements * sizeof(int32_t);
     } else if (type == mlir::Type::BIGINTEGER || type == mlir::Type::STRING) {
@@ -124,8 +124,8 @@ void Array::printData() {
     }
     std::cout << std::endl;
     std::cout << "METADATA-ENTRIES:" << std::endl;
-    for (size_t i = 0; i < metadataLen * 2; i += 2) {
-        std::cout << "{" << this->metadata[i] << ":" <<this->metadata[i+1] << "},"; 
+    for (size_t i = 0; i < metadataLen; i++) {
+        std::cout << this->metadata[i] << ","; 
     }
     std::cout << std::endl;
     printNulls();

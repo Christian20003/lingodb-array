@@ -21,6 +21,7 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
     uint32_t lastDimension = dimension;
     // Index to know which metadata entry should be updated
     uint32_t metadataIndex = 0;
+    uint32_t offset = 0;
     std::vector<std::string> elements;
     std::vector<uint32_t> stringLengths;
     std::vector<uint32_t> metadataLengths;
@@ -38,10 +39,10 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
                 }
                 // If not in first dimension, update dimension-length of upper dimension
                 if (metadata.size() != 0) {
-                    metadata[metadataIndex+1] += 1;
+                    metadata[metadataIndex] += 1;
                     // Check if new structure is inside defined bounds (Only if header is defined)
                     if (lengths.size() != 0) {
-                        if (metadata[metadataIndex+1] > lengths[position-1]) {
+                        if (metadata[metadataIndex] > lengths[position-1]) {
                             throw std::runtime_error("Array-Cast: Invalid structure, array object is out of bounds");
                         }
                     }
@@ -50,13 +51,12 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
                 auto insertPosition = metadata.begin();
                 for (size_t i = 0; i < metadataLengths.size(); i++) {
                     if (i > position) break;
-                    insertPosition += metadataLengths[i] * 2;
+                    insertPosition += metadataLengths[i];
                 }
                 position++;
                 // Add new metadata entry with known element-offset
-                insertPosition = metadata.insert(insertPosition, (uint32_t) nulls.size());
-                insertPosition = metadata.insert(insertPosition+1, 0);
-                metadataIndex = insertPosition - 1 - metadata.begin();
+                insertPosition = metadata.insert(insertPosition, 0);
+                metadataIndex = insertPosition - metadata.begin();
                 // Add new length information if completely new dimension has been discovered
                 if (position > metadataLengths.size()) {
                     metadataLengths.push_back(1);
@@ -70,6 +70,7 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
                 }
                 // Update absolute number of dimensions
                 dimension = std::max(dimension, position);
+                offset = nulls.size();
                 break;
             }
             // Enter previous upper dimension
@@ -77,10 +78,10 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
             {
                 // Update metadata entry only of last dimension by setting its length
                 if (lastDimension == position) {
-                    metadata[metadataIndex+1] = nulls.size() - metadata[metadataIndex];
+                    metadata[metadataIndex] = nulls.size() - offset;
                     // Check if new structure is inside defined bounds (Only if header is defined)
                     if (lengths.size() != 0) {
-                        if (metadata[metadataIndex+1] > lengths[position-1]) {
+                        if (metadata[metadataIndex] > lengths[position-1]) {
                             throw std::runtime_error("Array-Cast: Invalid structure, array object is out of bounds"); 
                         }
                     }
@@ -90,10 +91,10 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
                 auto modifyPosition = metadata.begin();
                 for (size_t i = 0; i < metadataLengths.size(); i++) {
                     if (i == position) break;
-                    modifyPosition += metadataLengths[i] * 2;
+                    modifyPosition += metadataLengths[i];
                 }
                 if (modifyPosition != metadata.begin()) {
-                    modifyPosition -= 2;
+                    modifyPosition--;
                     metadataIndex = modifyPosition - metadata.begin();
                 }
                 break;
@@ -188,7 +189,7 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
         totalStringSize += length;
     }
     // Set new size of target string
-    auto size = getStringSize(dimension, elements.size(), metadata.size() / 2, getNullBytes(nulls.size()), totalStringSize, type);
+    auto size = getStringSize(dimension, elements.size(), metadata.size(), getNullBytes(nulls.size()), totalStringSize, type);
     target.resize(size);
     char *buffer = target.data();
     

@@ -13,8 +13,9 @@ void Array::printArray(std::string &target, const uint32_t *entry, uint32_t dime
     // Check if last dimension is reached
     if (dimension == this->numberDimensions) {
         target.append("{");
+        uint32_t offset = getOffset(entry);
         // Iterate over each element
-        for (uint32_t i = entry[0]; i < entry[0] + entry[1]; i++) {
+        for (uint32_t i = offset; i < offset + entry[0]; i++) {
             // Check if it is null
             if (isNull(i)) {
                 target.append("null");
@@ -33,7 +34,7 @@ void Array::printArray(std::string &target, const uint32_t *entry, uint32_t dime
                 }
             }
             // If not last element, add a comma
-            if (i + 1 != entry[0] + entry[1]) target.append(",");
+            if (i + 1 != offset + entry[0]) target.append(",");
         }
         target.append("}");
         return;
@@ -42,11 +43,11 @@ void Array::printArray(std::string &target, const uint32_t *entry, uint32_t dime
     auto *children = getChildEntry(entry, dimension);
     target.append("{");
     // Iterate over each metadata entry belonging to the caller structure.
-    for (uint32_t i = 0; i < entry[1]; i++) {
+    for (uint32_t i = 0; i < entry[0]; i++) {
         // Call function with its children
-        printArray(target, children + i*entrySize, dimension + 1);
+        printArray(target, children + i, dimension + 1);
         // If not last element, add a comma
-        if (i+1 != entry[1]) target.append(",");        
+        if (i+1 != entry[0]) target.append(",");        
     }
     target.append("}");
 }

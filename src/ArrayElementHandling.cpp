@@ -8,8 +8,12 @@ const uint8_t* Array::getElements() {
 
 uint32_t Array::getNumberElements(bool withNulls) {
     if (withNulls) {
-        auto size = getMetadataLength();
-        return this->metadata[size*entrySize-2] + this->metadata[size*entrySize-1];
+        auto *start = getFirstEntry(this->numberDimensions);
+        uint32_t result = 0;
+        for (uint32_t i = 0; i < this->metadataLengths[this->numberDimensions-1]; i++) {
+            result += start[i];
+        }
+        return result;
     }
     return this->numberElements;
 }
@@ -21,8 +25,8 @@ uint32_t Array::getMaxDimensionSize(uint32_t dimension) {
     auto length = this->metadataLengths[dimension-1];
     auto *entry = getFirstEntry(dimension);
     uint32_t result = 0;
-    for (uint32_t i = 0; i < length * entrySize; i += entrySize) {
-        if (entry[i+1] > result) result = entry[i+1];
+    for (uint32_t i = 0; i < length; i++) {
+        if (entry[i] > result) result = entry[i];
     }
     return result;
 }

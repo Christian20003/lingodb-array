@@ -250,6 +250,8 @@ class Array {
 
     uint32_t getMaxDimensionSize(uint32_t dimension);
 
+    uint32_t getOffset(const uint32_t *width);
+
     /**
      * This method transforms the array into its string representation (for printing).
      * This method will be called recursively over each metadata entry.
