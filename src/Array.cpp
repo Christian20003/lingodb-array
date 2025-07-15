@@ -3,129 +3,189 @@
 
 using lingodb::runtime::Array;
 
-Array::Array(std::string &array, mlir::Type type) {
+const std::string Array::ARRAYHEADER = "array";
+
+Array::Array(std::string &array, int32_t type) {
     // Check if string is not empty
     if (array.size() == 0) {
         throw std::runtime_error("Array is empty");
     }
-    // Assign each pointer and value its position / value
+    
     char *data = array.data();
-    this->numberDimensions = *reinterpret_cast<uint32_t*>(data);
-    data += sizeof(uint32_t);
-    this->numberElements = *reinterpret_cast<uint32_t*>(data);
-    data += sizeof(uint32_t);
-    this->indices = reinterpret_cast<int32_t*>(data);
-    data += sizeof(int32_t) * this->numberDimensions;
-    this->metadataLengths = reinterpret_cast<uint32_t*>(data);
-    data += this->numberDimensions * sizeof(uint32_t);
-    this->metadata = reinterpret_cast<uint32_t*>(data);
-    for (size_t i = 0; i < this->numberDimensions; i++) {
-        data += this->metadataLengths[i] * sizeof(uint32_t);
+    std::string header(data, ARRAYHEADER.size());
+    if (header != ARRAYHEADER) {
+        throw std::runtime_error("Array is not processable");
     }
-    this->elements = reinterpret_cast<uint8_t*>(data);
-    data += this->numberElements * getTypeSize(type);
-    this->nulls = reinterpret_cast<uint8_t*>(data);
-    data += getNullBytes(getNumberElements(true));
-    this->strings = data;
-    this->type = type;
-    if (type == mlir::Type::INTEGER) {
+    auto typeId = getTypeId(type);
+    data += ARRAYHEADER.size();
+    data += 1;
+    this->type = typeId;
+    initArray(data);
+    if (type == ArrayType::INTEGER32) {
         printData();
     }
 }
 
-lingodb::runtime::VarLen32 Array::createEmptyArray(mlir::Type type) {
-    std::string result = "";
+Array::Array(std::string &array) {
+    // Check if string is not empty
+    if (array.size() == 0) {
+        throw std::runtime_error("Array is empty");
+    }
+    
+    char *data = array.data();
+    std::string header(data, ARRAYHEADER.size());
+    if (header != ARRAYHEADER) {
+        throw std::runtime_error("Array is not processable");
+    }
+    data += ARRAYHEADER.size();
+    this->type = *data;
+    data += 1;
+    initArray(data);
+}
+
+void Array::initArray(char *data) {
+    // Assign each attribute
+    this->dimensions = *reinterpret_cast<uint32_t*>(data);
+    data += sizeof(uint32_t);
+    this->size = *reinterpret_cast<uint32_t*>(data);
+    data += sizeof(uint32_t);
+    this->indices = reinterpret_cast<int32_t*>(data);
+    data += sizeof(int32_t) * this->dimensions;
+    this->dimensionWidthMap = reinterpret_cast<uint32_t*>(data);
+    data += this->dimensions * sizeof(uint32_t);
+    this->widths = reinterpret_cast<uint32_t*>(data);
+    for (size_t i = 0; i < this->dimensions; i++) {
+        data += this->dimensionWidthMap[i] * sizeof(uint32_t);
+    }
+    this->elements = reinterpret_cast<uint8_t*>(data);
+    data += this->size * getTypeSize(type);
+    this->nulls = reinterpret_cast<uint8_t*>(data);
+    data += getNullBytes(getSize(true));
+    this->strings = data;
+}
+
+lingodb::runtime::VarLen32 Array::createEmptyArray(int32_t type) {
+    auto typeId = getTypeId(type);
+    std::string result;
     uint32_t dimension = 1;
     uint32_t elements = 0;
-    size_t size = getStringSize(1, 0, 1, 0, 0, type);
+    auto size = getStringSize(1, 0, 1, 0, 0, typeId);
     result.resize(size);
-    char *buffer = &result[0];
+    auto *buffer = &result[0];
 
+    // Header
+    writeToBuffer(buffer, ARRAYHEADER.data(), ARRAYHEADER.size());
+    // Type
+    writeToBuffer(buffer, &typeId, 1);
+    // Dimension
     writeToBuffer(buffer, &dimension, 1);
+    // Size
     writeToBuffer(buffer, &elements, 1);
+    // Indices
     writeToBuffer(buffer, &dimension, 1);
-    writeToBuffer(buffer, &elements, 1);
-    writeToBuffer(buffer, &elements, 1);
+    // WidthMap
+    writeToBuffer(buffer, &dimension, 1);
+    // Widths
     writeToBuffer(buffer, &elements, 1);
 
     return VarLen32::fromString(result);
 }
 
-bool Array::isNumericType() {
-    if (type == mlir::Type::INTEGER ||
-        type == mlir::Type::BIGINTEGER ||
-        type == mlir::Type::FLOAT ||
-        type == mlir::Type::DOUBLE) {
-            return true;
-        }
-    return false;
+uint8_t Array::getTypeId(int32_t type) {
+    switch (type)
+    {
+    case ArrayType::INTEGER32:
+        return ArrayType::INTEGER32;
+    case ArrayType::INTEGER64:
+        return ArrayType::INTEGER64;
+    case ArrayType::FLOAT:
+        return ArrayType::FLOAT;
+    case ArrayType::DOUBLE:
+        return ArrayType::DOUBLE;
+    case ArrayType::BFLOAT:
+        return ArrayType::BFLOAT;
+    case ArrayType::STRING:
+        return ArrayType::STRING;
+    default:
+        throw std::runtime_error("Given type is not supported with arrays");
+    }
 }
 
-bool Array::isFloatingPointType() {
-    if (type == mlir::Type::FLOAT || type == mlir::Type::DOUBLE) {
+bool Array::isNumericType() {
+    switch (type) 
+    {
+    case ArrayType::INTEGER32:
+    case ArrayType::INTEGER64:
+    case ArrayType::FLOAT:
+    case ArrayType::DOUBLE:
+    case ArrayType::BFLOAT:
         return true;
     }
     return false;
 }
 
-size_t Array::getStringSize(uint32_t dimensions, uint32_t numberElements, uint32_t metadataSize, uint32_t nullSize, uint32_t stringSize, mlir::Type type) {
-    size_t size = sizeof(uint32_t) * 2 + dimensions * sizeof(int32_t) + dimensions * sizeof(uint32_t) + metadataSize * sizeof(uint32_t);
-    if (type == mlir::Type::INTEGER) {
-        size += numberElements * sizeof(int32_t);
-    } else if (type == mlir::Type::BIGINTEGER || type == mlir::Type::STRING) {
-        size += numberElements * sizeof(int64_t);
-    } else if (type == mlir::Type::FLOAT) {
-        size += numberElements * sizeof(float);
-    } else if (type == mlir::Type::DOUBLE) {
-        size += numberElements * sizeof(double);
-    } else {
-        throw std::runtime_error("Given type is not supported in arrays");
+bool Array::isFloatingPointType() {
+    switch (type) 
+    {
+    case ArrayType::FLOAT:
+    case ArrayType::DOUBLE:
+    case ArrayType::BFLOAT:
+        return true;
     }
-    size += nullSize;
-    size += stringSize;
-    return size;
+    return false;
 }
 
-size_t Array::getTypeSize(mlir::Type type) {
-    if (type == mlir::Type::INTEGER) {
+size_t Array::getStringSize(uint32_t dimensions, uint32_t size, uint32_t widths, uint32_t nullSize, uint32_t stringSize, uint8_t type) {
+    size_t result = ARRAYHEADER.size() + 1;
+    result += (sizeof(uint32_t) * 2) + (dimensions * sizeof(int32_t)) + (dimensions * sizeof(uint32_t)) + (widths * sizeof(uint32_t));
+    result += size * getTypeSize(type);
+    result += nullSize;
+    result += stringSize;
+    return result;
+}
+
+size_t Array::getTypeSize(uint8_t type) {
+    switch (type) 
+    {
+    case ArrayType::INTEGER32:
         return sizeof(int32_t);
-    } else if (type == mlir::Type::BIGINTEGER) {
+    case ArrayType::INTEGER64:
         return sizeof(int64_t);
-    } else if (type == mlir::Type::FLOAT) {
+    case ArrayType::FLOAT:
         return sizeof(float);
-    } else if (type == mlir::Type::DOUBLE) {
+    case ArrayType::DOUBLE:
         return sizeof(double);
-    } else if (type == mlir::Type::STRING) {
+    case ArrayType::STRING:
         return sizeof(uint32_t);
-    } else {
+    default:
         throw std::runtime_error("Given type is not supported in arrays");
     }
 }
 
-mlir::Type Array::getType() {
+uint8_t Array::getType() {
     return this->type;
 }
 
 uint32_t Array::getDimension() {
-    return this->numberDimensions;
+    return this->dimensions;
 }
 
 void Array::printData() {
     size_t metadataLen = 0;
     std::cout << "INDICES:" << std::endl;
-    for (size_t i = 0; i < this->numberDimensions; i++) {
+    for (size_t i = 0; i < this->dimensions; i++) {
         std::cout << this->indices[i] << ",";
     }
     std::cout << std::endl;
     std::cout << "METADATA-LENGTHS:" << std::endl;
-    for (size_t i = 0; i < this->numberDimensions; i++) {
-        std::cout << this->metadataLengths[i] << ",";
-        metadataLen += this->metadataLengths[i];
+    for (size_t i = 0; i < this->dimensions; i++) {
+        std::cout << this->dimensionWidthMap[i] << ",";
+        metadataLen += this->dimensionWidthMap[i];
     }
     std::cout << std::endl;
     std::cout << "METADATA-ENTRIES:" << std::endl;
     for (size_t i = 0; i < metadataLen; i++) {
-        std::cout << this->metadata[i] << ","; 
+        std::cout << this->widths[i] << ","; 
     }
     std::cout << std::endl;
     printNulls();
@@ -133,7 +193,7 @@ void Array::printData() {
 
 void Array::printNulls() {
     std::cout << "NULLS:" << std::endl;
-    for (size_t i = 0; i < getNumberElements(true); i++) {
+    for (size_t i = 0; i < getSize(true); i++) {
         std::cout << isNull(i) << ",";
     }
     std::cout << std::endl;

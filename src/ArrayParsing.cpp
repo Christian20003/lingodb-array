@@ -3,14 +3,15 @@
 
 using lingodb::runtime::Array;
 
-void Array::fromString(std::string &source, std::string &target, mlir::Type type) {
-    uint32_t dimension = 0;
-    // How many characters should be ignored (defining possible header)
-    uint32_t start = 0;
+lingodb::runtime::VarLen32 Array::fromString(std::string &source, int32_t type) {
+    uint8_t typeId = getTypeId(type);
+    uint32_t dimensions = 0;
     std::vector<int32_t> indices;
     std::vector<int32_t> lengths;
-    start = parseHeader(source, indices, lengths);
-    dimension = indices.size();
+    // How many characters should be ignored (possible header)
+    auto start = parseHeader(source, indices, lengths);
+    // If header exists, dimensions can be derived
+    dimensions = indices.size();
 
     if (source.begin() + start == source.end()) {
         throw std::runtime_error("Array-Cast: Invalid array specification");
@@ -18,14 +19,14 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
 
     uint32_t position = 0;
     // Stores the dimension in which the elements are stored
-    uint32_t lastDimension = dimension;
+    uint32_t lastDimension = dimensions;
     // Index to know which metadata entry should be updated
-    uint32_t metadataIndex = 0;
-    uint32_t offset = 0;
+    uint32_t widthIndex = 0;
+    uint32_t widthOffset = 0;
     std::vector<std::string> elements;
     std::vector<uint32_t> stringLengths;
-    std::vector<uint32_t> metadataLengths;
-    std::vector<uint32_t> metadata;
+    std::vector<uint32_t> widthMap;
+    std::vector<uint32_t> widths;
     std::vector<bool> nulls;
     // Iterate over each character from the given string
     for(auto symbol = source.begin() + start; symbol != source.end(); symbol++) {
@@ -37,65 +38,65 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
                 if (lastDimension != 0 && lastDimension < position+1) {
                     throw std::runtime_error("Array-Cast: Invalid structure, elements are not in lowest dimension");
                 }
-                // If not in first dimension, update dimension-length of upper dimension
-                if (metadata.size() != 0) {
-                    metadata[metadataIndex] += 1;
+                // If not in first dimension, update width of upper dimension
+                if (widths.size() != 0) {
+                    widths[widthIndex] += 1;
                     // Check if new structure is inside defined bounds (Only if header is defined)
                     if (lengths.size() != 0) {
-                        if (metadata[metadataIndex] > lengths[position-1]) {
+                        if (widths[widthIndex] > lengths[position-1]) {
                             throw std::runtime_error("Array-Cast: Invalid structure, array object is out of bounds");
                         }
                     }
                 }
-                // Determine the position to add a new pair for metadata
-                auto insertPosition = metadata.begin();
-                for (size_t i = 0; i < metadataLengths.size(); i++) {
+                // Determine the position to add a new width
+                auto insertPosition = widths.begin();
+                for (size_t i = 0; i < widthMap.size(); i++) {
                     if (i > position) break;
-                    insertPosition += metadataLengths[i];
+                    insertPosition += widthMap[i];
                 }
                 position++;
-                // Add new metadata entry with known element-offset
-                insertPosition = metadata.insert(insertPosition, 0);
-                metadataIndex = insertPosition - metadata.begin();
-                // Add new length information if completely new dimension has been discovered
-                if (position > metadataLengths.size()) {
-                    metadataLengths.push_back(1);
-                // Otherwise increase length of already existing one
+                // Add new width entry
+                insertPosition = widths.insert(insertPosition, 0);
+                widthIndex = insertPosition - widths.begin();
+                // Add new widthMap information if completely new dimension has been discovered
+                if (position > widthMap.size()) {
+                    widthMap.push_back(1);
+                // Otherwise increase value of already existing one
                 } else {
-                    metadataLengths[position - 1] += 1;
+                    widthMap[position - 1] += 1;
                 }
                 // Add start index if not already defined in a header
                 if (position > indices.size()) {
                     indices.push_back(1);
                 }
                 // Update absolute number of dimensions
-                dimension = std::max(dimension, position);
-                offset = nulls.size();
+                dimensions = std::max(dimensions, position);
+                widthOffset = nulls.size();
                 break;
             }
             // Enter previous upper dimension
             case '}':
             {
-                // Update metadata entry only of last dimension by setting its length
+                // Update width entry only of last dimension
                 if (lastDimension == position) {
-                    metadata[metadataIndex] = nulls.size() - offset;
+                    widths[widthIndex] = nulls.size() - widthOffset;
                     // Check if new structure is inside defined bounds (Only if header is defined)
                     if (lengths.size() != 0) {
-                        if (metadata[metadataIndex] > lengths[position-1]) {
+                        if (widths[widthIndex] > lengths[position-1]) {
                             throw std::runtime_error("Array-Cast: Invalid structure, array object is out of bounds"); 
                         }
                     }
                 }
                 position--;
-                // Determine the index of the last metadata entry that corresponds to the upper dimension
-                auto modifyPosition = metadata.begin();
-                for (size_t i = 0; i < metadataLengths.size(); i++) {
+                // Determine the index of the last width entry that corresponds to the upper dimension
+                auto modifyPosition = widths.begin();
+                for (size_t i = 0; i < widthMap.size(); i++) {
                     if (i == position) break;
-                    modifyPosition += metadataLengths[i];
+                    modifyPosition += widthMap[i];
                 }
-                if (modifyPosition != metadata.begin()) {
+                if (modifyPosition != widths.begin()) {
                     modifyPosition--;
-                    metadataIndex = modifyPosition - metadata.begin();
+                    widthIndex = modifyPosition - widths.begin();
                 }
                 break;
             }
@@ -172,7 +173,7 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
                 // Add discovered element
                 elements.push_back(std::string(symbol, end));
                 // If type is STRING, also store the elements length
-                if (type == mlir::Type::STRING) {
+                if (type == ArrayType::STRING) {
                     stringLengths.push_back(end - symbol);
                     symbol = end;
                 } else {
@@ -188,44 +189,46 @@ void Array::fromString(std::string &source, std::string &target, mlir::Type type
     for (auto &length : stringLengths) {
         totalStringSize += length;
     }
+    std::string result;
     // Set new size of target string
-    auto size = getStringSize(dimension, elements.size(), metadata.size(), getNullBytes(nulls.size()), totalStringSize, type);
-    target.resize(size);
-    char *buffer = target.data();
+    auto size = getStringSize(dimensions, elements.size(), widths.size(), getNullBytes(nulls.size()), totalStringSize, typeId);
+    result.resize(size);
+    char *buffer = result.data();
     
     // Now copy each information into the target string
-    writeToBuffer(buffer, &dimension, 1);
+    writeToBuffer(buffer, ARRAYHEADER.data(), ARRAYHEADER.size());
+    writeToBuffer(buffer, &typeId, 1);
+    writeToBuffer(buffer, &dimensions, 1);
     uint32_t elementSize = elements.size();
     writeToBuffer(buffer, &elementSize, 1);
     writeToBuffer(buffer, indices.data(), indices.size());
-    writeToBuffer(buffer, metadataLengths.data(), metadataLengths.size());
-    writeToBuffer(buffer, metadata.data(), metadata.size());
+    writeToBuffer(buffer, widthMap.data(), widthMap.size());
+    writeToBuffer(buffer, widths.data(), widths.size());
 
-    if (type == mlir::Type::STRING) {
+    if (typeId == ArrayType::STRING) {
         writeToBuffer(buffer, stringLengths.data(), stringLengths.size());
     } else {
         for (auto &element : elements) {
-            if (type == mlir::Type::INTEGER) {
+            if (typeId == ArrayType::INTEGER32) {
                 castAndCopyElement<int32_t>(buffer, element);
-            } else if (type == mlir::Type::BIGINTEGER) {
+            } else if (typeId == ArrayType::INTEGER64) {
                 castAndCopyElement<int64_t>(buffer, element);
-            } else if (type == mlir::Type::FLOAT) {
+            } else if (typeId == ArrayType::FLOAT) {
                 castAndCopyElement<float>(buffer, element);
-            } else if (type == mlir::Type::DOUBLE) {
-                castAndCopyElement<double>(buffer, element);
             } else {
-                throw std::runtime_error("Given type is not supported in arrays");
+                castAndCopyElement<double>(buffer, element);
             }
         }
     }
 
     copyNulls(buffer, nulls);
 
-    if (type == mlir::Type::STRING) {
+    if (typeId == ArrayType::STRING) {
         for (auto &element : elements) {
             writeToBuffer(buffer, element.data(), element.length());
         }
     }
+    return VarLen32::fromString(result);
 }
 
 uint32_t Array::parseHeader(std::string &array, std::vector<int32_t> &indices, std::vector<int32_t> &lengths) {

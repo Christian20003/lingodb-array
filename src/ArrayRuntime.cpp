@@ -2,14 +2,12 @@
 
 using lingodb::runtime::ArrayRuntime;
 
-lingodb::runtime::VarLen32 ArrayRuntime::fromString(lingodb::runtime::VarLen32 str, mlir::Type type) {
+lingodb::runtime::VarLen32 ArrayRuntime::fromString(lingodb::runtime::VarLen32 str, int32_t type) {
     std::string content = str.str();
-    std::string result = "";
-    lingodb::runtime::Array::fromString(content, result, type);
-    return lingodb::runtime::VarLen32::fromString(result);
+    return lingodb::runtime::Array::fromString(content, type);
 }
 
-lingodb::runtime::VarLen32 ArrayRuntime::append(
+/* lingodb::runtime::VarLen32 ArrayRuntime::append(
     lingodb::runtime::VarLen32 left,
     lingodb::runtime::VarLen32 right,
     mlir::Type leftType,
@@ -273,4 +271,4 @@ int32_t ArrayRuntime::getHighestPosition(lingodb::runtime::VarLen32 array, mlir:
     std::string arrayVal = array.str();
     Array arrayObj(arrayVal, type);
     return arrayObj.getHighestPosition();
-}
+} */

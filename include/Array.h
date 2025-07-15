@@ -17,46 +17,47 @@ namespace lingodb::runtime {
 
 /**
  * This class represents an array structure in LingoDB.
- * @property numberDimensions   - Defines the number of dimensions in this array.
- * @property numberElements     - Defines the number of elements in this array (without NULL values).
- * @property metadataLengths    - A pointer to the size of the metadata for each dimension.
- * @property metadata           - A pointer to the first metadata value.
- * @property elements           - A pointer to the first element of this array.
- * @property nulls              - A pointer to the first bitstring, representing null values.
- * @property strings            - A pointer to the first character of a string (if array stores strings). 
- * 
- * Definition of metadata attribute:
- * This pointer points to a 'list' of integer elements which needed to be interpreted as triples. Each
- * triple defines the structure of a single array-element (opened with '{' and closed with '}'). The 
- * interpretation of each single value is as follows:
- * 1. element-offset: Index of the first element in this array structure 
- *                    (IMPORTANT: This will include NULL values).
- * 2. element-length: The number of elements inside this array structure
- *                    (IMPORTANT: This will include NULL values).
- * 3. dimension-length: The number of triples (from metadata) that corresponds to this array structure.
- *                     These triples are the metadata of the next lower dimension.
  * 
  * @example - '{{{1,2,3},{1,null,3}},{{1,2,3},{1,2,3}}}'
- * numberDimensions = 3
- * numberElements = 11
- * metadataLengths = 1,2,4 (1.Dim, 2.Dim, 3.Dim)
- * metadata = {0,12,2},{0,6,2},{6,6,2},{0,3,0},{3,3,0},{6,3,0},{9,3,0} 
+ * type = 0
+ * dimensions = 3
+ * size = 11
+ * indices = 1,1,1
+ * dimensionWidthMap = 1,2,4 (1.Dim, 2.Dim, 3.Dim)
+ * widths = 2,2,2,3,3,3,3 
  * elements = ...
  * nulls = 0000.1000, 0000.0000 (bitstrings - from left to right) 
  */
 class Array {
     private:
-    uint32_t numberDimensions;
-    uint32_t numberElements;
+    // The type of the array elements (only necessary for printing).
+    uint8_t type;
+    // The number of dimensions in this array.
+    uint32_t dimensions;
+    // The number of elements in this array (without NULL values).
+    uint32_t size;
+    // A pointer to the first index values of each dimension.
     int32_t *indices;
-    uint32_t *metadataLengths;
-    uint32_t *metadata;
+    // A pointer to the number of width values for each dimension.
+    uint32_t *dimensionWidthMap;
+    // A pointer to the widths of each array structure.
+    uint32_t *widths;
+    // A pointer to the first element of this array.
     uint8_t *elements;
+    // A pointer to the first bitstring, representing NULL values.
     uint8_t *nulls;
+    // A pointer to the first character of a string (if array stores strings).
     char *strings;
-    mlir::Type type;
 
-    static const uint32_t entrySize = 2;
+    // This enumeration specifies all array element types
+    enum ArrayType {
+        INTEGER64 = 2,
+        INTEGER32 = 3,
+        FLOAT = 4,
+        DOUBLE = 5,
+        STRING = 11,
+        BFLOAT = 12
+    };
 
 /*##########################################################################################################################################################  
  *                                                              PRIVATE METHODS
@@ -92,22 +93,33 @@ class Array {
      * This function calculates the necessary size of a string to store all data of the array.
      * 
      * @param dimensions The number of dimensions.
-     * @param numberElements The number of elements (without NULL).
-     * @param metadataSize The number of metadata elements (number of triples).
+     * @param size The number of elements (without NULL).
+     * @param widths The number of widths elements.
      * @param nullSize The number of bitstrings, representing NULL values.
      * @param stringSize The total length of all string elements (if array stores string values).
      * @param type The type of each array element.
      * @throws `std::runtime_error`: If the provided type is not supported.
      */
-    static size_t getStringSize(uint32_t dimensions, uint32_t numberElements, uint32_t metadataSize, uint32_t nullSize, uint32_t stringSize, mlir::Type type);
+    static size_t getStringSize(uint32_t dimensions, uint32_t size, uint32_t widths, uint32_t nullSize, uint32_t stringSize, uint8_t type);
     
     /**
      * This function returns the size of a specific element type.
      * 
      * @param type The type of each array element.
+     * @throws `std::runtime_error`: If the type is not supported.
      * @return The size of a single element of the provided type.
      */
-    static size_t getTypeSize(mlir::Type type);
+    static size_t getTypeSize(uint8_t type);
+
+    /**
+     * This function maps an integer 32-bit type specification to
+     * an unsigned integer 8-bit type specification.
+     * 
+     * @param type The enumeration value of the type.
+     * @throws `std::runtime_error`: If the provided value is not 
+     * listed in the type enumeration for arrays.
+     */
+    static uint8_t getTypeId(int32_t type);
 
     /**
      * This method returns the exact element position of a value stored in the 
@@ -248,8 +260,24 @@ class Array {
     template<class TYPE>
     int32_t getMaxIndex();
 
-    uint32_t getMaxDimensionSize(uint32_t dimension);
+    /**
+     * This method returns the size of a particular dimension by returning
+     * the largest width in that dimension.
+     * 
+     * @param dimension The requested dimension. Possible value range 
+     * `[1:numberDimensions]`.
+     * @throws `std::runtime_error`: If the dimension is out of range.
+     */
+    uint32_t getDimensionSize(uint32_t dimension);
 
+    /**
+     * This method returns the index of the first element that
+     * belongs to the provided width entry.
+     * 
+     * @param width A pointer to a width entry of the last dimension.
+     * @throws `std::runtime_error`: If the provided width could not be
+     * found in the width entries of the last dimension.
+     */
     uint32_t getOffset(const uint32_t *width);
 
     /**
@@ -257,12 +285,12 @@ class Array {
      * This method will be called recursively over each metadata entry.
      * 
      * @param target A reference to a string in which the result should be stored.
-     * @param entry A pointer to the metadata element that is processed.
+     * @param width A pointer to the width element that is processed.
      * @param dimension The current dimension.
      * @throws `std::runtime_error`: If the provided array structure is
      * not valid (processable).
      */
-    void printArray(std::string &target, const uint32_t *entry, uint32_t dimension);
+    void printArray(std::string &target, const uint32_t *width, uint32_t dimension);
 
     void printHeader(std::string &target);
 
@@ -270,9 +298,19 @@ class Array {
      * This method proofs if the given position is a NULL value.
      * 
      * @param position The position of the array element.
+     * @throws `std::runtime_error`: If the provided position is out of range.
      * @return `True` if there is a NULL value, otherwise `False`.
      */
     bool isNull(uint32_t position);
+
+    /**
+     * This method initializes every attribute of this class except the type 
+     * attribute.
+     * 
+     * @param data A pointer to the string that stores the array in array 
+     * processable format.
+     */
+    void initArray(char *data);
 
     // DEBUG-METHODS
     void printData();
@@ -283,34 +321,50 @@ class Array {
 *##########################################################################################################################################################*/
 
     public:
+
+    // This constant defines the first characters of an array (necessary for printing)
+    static const std::string ARRAYHEADER;
+
     /**
      * This constructor generates an array object by extracting all data from the given string.
-     * The given string should be in a processible array format. Otherwise use the `fromString`
-     * method.
+     * The given string should be in a processible array format. Otherwise this can lead to
+     * undefined behaviour. Is the string not in a processable format use the `fromString` function.
      * @param array A reference to the string which stores the array data.
-     * @param type The type of each array element.
-     * @throws `std::runtime_error`: If the given string is empty. 
+     * @param type The enum (`ArrayType`) value of the element type.
+     * @throws `std::runtime_error`: If the given string is empty or does not include the array 
+     * identification header. 
      */
-    Array(std::string &array, mlir::Type type);
+    Array(std::string &array, int32_t type);
+
+    /**
+     * This constructor generates an array object by extracting all data from the given string.
+     * The given string should be in a processible array format. Otherwise this can lead to
+     * undefined behaviour. Is the string not in a processable format use the `fromString` function.
+     * @param array A reference to the string which stores the array data.
+     * @throws `std::runtime_error`: If the given string is empty or does not include the array 
+     * identification header. 
+     */
+    Array(std::string &array);
 
     /**
      * This function parses the raw string into a processible array format.
      * 
      * @param source A reference to the source string.
-     * @param target A reference to the string that stores the result.
-     * @param type The type of each array element.
-     * @throws `std::runtime_error`: If the given string has invalid syntax or if the
-     * provided elements could not be casted to the specified type.
+     * @param type The type of each array element (enumeration value).
+     * @throws `std::runtime_error`: If the given string has invalid syntax. If the
+     * provided elements could not be casted to the specified type. If the provided
+     * type is not supported.
      */
-    static void fromString(std::string &source, std::string &target, mlir::Type type);
+    static VarLen32 fromString(std::string &source, int32_t type);
 
     /**
      * This function creates an empty array.
      * 
      * @param type The type of the array elements.
+     * @throws `std::runtime_error`: If the provided type is not supported.
      * @return An empty array as string in array processable format.
      */
-    static VarLen32 createEmptyArray(mlir::Type type);
+    static VarLen32 createEmptyArray(int32_t type);
 
     /**
      * This method copies all array elements in this array into the provided buffer.
@@ -351,10 +405,10 @@ class Array {
      * 
      * @param buffer A reference to the string buffer where the content needs to be stored.
      * @param nulls  A pointer to the null bitstrings that should be copied.
-     * @param numberElements The number of elements in this array (including NULL values).
+     * @param size The number of elements in this array (including NULL values).
      * @param position The start position of the first element. 
      */
-    void copyNulls(char *&buffer, const uint8_t *nulls, uint32_t numberElements, uint32_t position);
+    void copyNulls(char *&buffer, const uint8_t *nulls, uint32_t size, uint32_t position);
 
     /**
      * This function copies the boolean values from the given vector into the buffer.
@@ -369,17 +423,17 @@ class Array {
     /**
      * This function counts the number of NULL values up to the specified position.
      * 
-     * @param maxPosition The limit up to which position should be counted.
+     * @param position The limit up to which position should be counted.
      * Possible value range `[0:numberElements + nulls - 1]`.
      * @throws `std::runtime_error`: If the selected position is out of range.
      * @return The number of NULL values.
      */
-    uint32_t countNulls(uint32_t maxPosition);
+    uint32_t countNulls(uint32_t position);
 
     /**
      * This method returns the type of all array elements.
      */
-    mlir::Type getType();
+    uint8_t getType();
 
     /**
      * This method returns the dimension value of this array.
@@ -387,25 +441,26 @@ class Array {
     uint32_t getDimension();
 
     /**
-     * This method returns the number of elements in this array.
+     * This method returns the size of the array by returning
+     * the number of elements stored.
      * 
      * @param withNulls If NULL values should be included.
      */
-    uint32_t getNumberElements(bool withNulls = false);
+    uint32_t getSize(bool withNulls = false);
 
     /**
-     * This method returns the number of metadata entries in this array.
+     * This method returns the total number of width entries.
      */
-    uint32_t getMetadataLength();
+    uint32_t getWidthSize();
 
     /**
-     * This method returns the number of metadata entris of a specific
+     * This method returns the number of width entris of a specific
      * dimension.
      * 
      * @param dimension The selected dimension. Possible value range `[1:numberDimensions]`.
      * @throws `std::runtime_error`: If the selected dimension is out of range.
      */
-    uint32_t getMetadataLength(uint32_t dimension);
+    uint32_t getWidthSize(uint32_t dimension);
 
     /**
      * This method returns the total string length of all strings in
@@ -417,16 +472,16 @@ class Array {
      * This method returns the string length of a particular element.
      * 
      * @param position The position of the element. Possible value range
-     * `[0:numberElements-1]`. Position values should not  include NULL values.
+     * `[0:numberElements-1]`. Position values should not include NULL values.
      * @throws `std::runtime_error`: If the selected position is out of range.
      * @return A string length if the array stores strings, otherwise `0`.
      */
     uint32_t getStringLength(uint32_t position);
 
     /**
-     * This method returns a pointer to the metadata entries.
+     * This method returns a pointer to the width entries.
      */
-    const uint32_t* getMetadata();
+    const uint32_t* getWidths();
 
     /**
      * This method returns a pointer to the array elements.
@@ -442,32 +497,32 @@ class Array {
      * This function returns the number of bytes required to store NULL bits
      * for each position.
      * 
-     * @param numberElements The number of elements that requires a NULL bit.
+     * @param size The number of elements that requires a NULL bit.
      * @return Number of NULL bytes.
      */
-    static uint32_t getNullBytes(uint32_t numberElements);
+    static uint32_t getNullBytes(uint32_t size);
 
     /**
-     * This method returns a pointer to the first metadata entry that
+     * This method returns a pointer to the first width entry that
      * belongs to the provided dimension.
      * 
      * @param dimension The selected dimension. Possible value range `[1:numberDimensions]`.
      * @throws `std::runtime_error`: If the selected dimension is out of range.
      */
-    const uint32_t* getFirstEntry(uint32_t dimension);
+    const uint32_t* getFirstWidth(uint32_t dimension);
 
     /**
-     * This method returns a pointer to the first metadata entry that
-     * belongs as child to the given metadata entry.
+     * This method returns a pointer to the first width entry that
+     * belongs as child to the given width entry.
      * 
-     * @param entry A pointer to the metadata entry.
-     * @param dimension The dimension of the given metadata entry. 
+     * @param width A pointer to the width entry.
+     * @param dimension The dimension of the given width entry. 
      * Possible value range `[1:numberDimensions]`.
      * @throws `std::runtime_error`: If the selected dimension is out of range.
-     * @return A pointer to the first child metadata entry. If not any child 
+     * @return A pointer to the first child width entry. If not any child 
      * could be found it will return a `nullptr`.
      */
-    const uint32_t* getChildEntry(const uint32_t *entry, uint32_t dimension);
+    const uint32_t* getChildWidth(const uint32_t *width, uint32_t dimension);
 
     /**
      * This method returns the index of the largest value in this array.
@@ -477,13 +532,13 @@ class Array {
     int32_t getHighestPosition();
 
     /**
-     * This method proofs if the given metadata pointer has the same structure
-     * (equal elements) as the metadata from this array.
+     * This method proofs if the given width pointer has the same structure
+     * (equal elements) as the width attribute from this array.
      * 
-     * @param other A pointer to the first metadata entry of another array.
-     * @return `True` if each metadata entry is equal, otherwise `False`.
+     * @param other A pointer to the first width entry of another array.
+     * @return `True` if each width entry is equal, otherwise `False`.
      */
-    bool equalMetadata(const uint32_t *other);
+    bool equalWidths(const uint32_t *other);
 
     /**
      * This method proofs if the array contains NULL values.

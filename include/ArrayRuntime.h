@@ -4,7 +4,7 @@ namespace lingodb::runtime {
 
     struct ArrayRuntime {
 
-        static lingodb::runtime::VarLen32 fromString(lingodb::runtime::VarLen32 str, mlir::Type type);
+        static lingodb::runtime::VarLen32 fromString(lingodb::runtime::VarLen32 str, int32_t type);
 
         static VarLen32 append(VarLen32 left, VarLen32 right, mlir::Type leftType, mlir::Type rightType);
         static VarLen32 append(VarLen32 array, mlir::Type type, int32_t value);

@@ -2,7 +2,7 @@
 
 using lingodb::runtime::Array;
 
-template<>
+/* template<>
 lingodb::runtime::VarLen32 Array::appendElement(std::string value) {
     std::string result = "";
     size_t size = getStringSize(
@@ -224,4 +224,4 @@ lingodb::runtime::VarLen32 Array::append(std::string &toAppend) {
         throw std::runtime_error("Array-Append: Array elements are not of type string");
     }
     return appendElement(toAppend);
-}
+} */

@@ -2,7 +2,7 @@
 
 using lingodb::runtime::Array;
 
-lingodb::runtime::VarLen32 Array::slice(uint32_t lowerBound, uint32_t upperBound, uint32_t dimension) {
+/* lingodb::runtime::VarLen32 Array::slice(uint32_t lowerBound, uint32_t upperBound, uint32_t dimension) {
     if (lowerBound > upperBound) {
         throw std::runtime_error("Array-Slice: Given lower-bound is larger than given upper-bound");
     }
@@ -142,4 +142,4 @@ uint32_t Array::metadataSlice(
         result += elemLength;
     }
     return result;
-}
+} */

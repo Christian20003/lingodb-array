@@ -2,7 +2,7 @@
 
 using lingodb::runtime::Array;
 
-lingodb::runtime::VarLen32 Array::operator[](uint32_t position) {
+/* lingodb::runtime::VarLen32 Array::operator[](uint32_t position) {
     
     std::string result = "";
     // Update metadata
@@ -94,4 +94,4 @@ lingodb::runtime::VarLen32 Array::operator[](uint32_t position) {
         }
     }
     return VarLen32::fromString(result);
-}
+} */

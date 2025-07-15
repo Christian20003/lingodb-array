@@ -10,7 +10,7 @@ void Array::writeToBuffer(char *&buffer, const TYPE *data, uint32_t size) {
     buffer += sizeof(TYPE) * size;
 }
 
-template<class TYPE, class OP>
+/* template<class TYPE, class OP>
 lingodb::runtime::VarLen32 Array::executeScalarOperation(TYPE value, bool isLeft) {
     // Define result string size (does not change)
     std::string result;
@@ -250,14 +250,15 @@ lingodb::runtime::VarLen32 Array::generate(Array &structure, mlir::Type type) {
     }
 
     return VarLen32::fromString(result);
-}
+} */
 
 template<class TYPE>
 int32_t Array::getMaxIndex() {
-    const TYPE *elements = reinterpret_cast<const TYPE*>(this->elements);
+    auto *elements = reinterpret_cast<const TYPE*>(this->elements);
     int32_t result = -1;
+    auto size = getSize(true);
 
-    for (uint32_t i = 0; i < this->metadata[1]; i++) {
+    for (uint32_t i = 0; i < size; i++) {
         if (isNull(i)) continue;
         uint32_t position = getElementPosition(i);
         if (result == -1) result = i;

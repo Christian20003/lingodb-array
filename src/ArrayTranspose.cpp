@@ -2,7 +2,7 @@
 
 using lingodb::runtime::Array;
 
-lingodb::runtime::VarLen32 Array::transpose() {
+/* lingodb::runtime::VarLen32 Array::transpose() {
     if (!isNumericType()) {
         throw std::runtime_error("Array-Tranypose: This function is only supported with numeric element types");
     }
@@ -103,4 +103,4 @@ lingodb::runtime::VarLen32 Array::transpose() {
         copyNulls(buffer, nulls);
     }
     return VarLen32::fromString(result);
-}
+} */

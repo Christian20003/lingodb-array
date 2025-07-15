@@ -6,131 +6,152 @@ const uint8_t* Array::getElements() {
     return this->elements;
 }
 
-uint32_t Array::getNumberElements(bool withNulls) {
+uint32_t Array::getSize(bool withNulls) {
     if (withNulls) {
-        auto *start = getFirstEntry(this->numberDimensions);
+        // With nulls iterate over widths of last dimension and count values
+        auto *start = getFirstWidth(this->dimensions);
+        auto limit = this->dimensionWidthMap[this->dimensions-1];
         uint32_t result = 0;
-        for (uint32_t i = 0; i < this->metadataLengths[this->numberDimensions-1]; i++) {
+        for (uint32_t i = 0; i < limit; i++) {
             result += start[i];
         }
         return result;
     }
-    return this->numberElements;
+    return this->size;
 }
 
-uint32_t Array::getMaxDimensionSize(uint32_t dimension) {
-    if (this->numberDimensions < dimension) {
+uint32_t Array::getDimensionSize(uint32_t dimension) {
+    if (dimension > this->dimensions || dimension == 0) {
         throw std::runtime_error("Requested array dimension does not exist");
     }
-    auto length = this->metadataLengths[dimension-1];
-    auto *entry = getFirstEntry(dimension);
+    auto length = this->dimensionWidthMap[dimension-1];
+    auto *entries = getFirstWidth(dimension);
     uint32_t result = 0;
+    // Iterate over each width in dimension and select largest
     for (uint32_t i = 0; i < length; i++) {
-        if (entry[i] > result) result = entry[i];
+        if (entries[i] > result) result = entries[i];
     }
     return result;
 }
 
 uint32_t Array::getStringLength() {
-    if (type != mlir::Type::STRING) {
-        return 0;
-    }
+    if (this->type != ArrayType::STRING) return 0;
     uint32_t result = 0;
-    uint32_t *stringLengths = reinterpret_cast<uint32_t*>(this->elements);
-    for (size_t i = 0; i < this->numberElements; i++) {
-        result += stringLengths[i];
+    // Iterate over each string length value
+    auto *lengths = reinterpret_cast<uint32_t*>(this->elements);
+    for (size_t i = 0; i < this->size; i++) {
+        result += lengths[i];
     }
     return result;
 }
 
 uint32_t Array::getStringLength(uint32_t position) {
-    if (this->numberElements <= position) {
-        throw std::runtime_error("Array-Element position does not exist");
+    if (this->size <= position) {
+        throw std::runtime_error("Requested array element does not exist");
     }
-    if (type != mlir::Type::STRING) {
-        return 0;
-    }
-    uint32_t *stringLengths = reinterpret_cast<uint32_t*>(this->elements);
-    return stringLengths[position];
+    if (this->type != ArrayType::STRING) return 0;
+    uint32_t *lengths = reinterpret_cast<uint32_t*>(this->elements);
+    return lengths[position];
 }
 
 int32_t Array::getHighestPosition() {
-    if (this->numberElements == 0) {
-        return 0;
-    }
-    if (type == mlir::Type::INTEGER) {
+    if (this->size == 0) return 0;
+    switch (this->type) {
+    case ArrayType::INTEGER32:
         return getMaxIndex<int32_t>();
-    } else if (type == mlir::Type::BIGINTEGER) {
+    case ArrayType::INTEGER64:
         return getMaxIndex<int64_t>();
-    } else if (type == mlir::Type::FLOAT) {
+    case ArrayType::FLOAT:
         return getMaxIndex<float>();
-    } else if (type == mlir::Type::DOUBLE) {
+    case ArrayType::DOUBLE:
         return getMaxIndex<double>();
-    } else if (type == mlir::Type::STRING) {
+    case ArrayType::STRING:
         return getMaxIndex<uint32_t>();
-    } else {
+    default:
         throw std::runtime_error("Array-HighestPosition: Given type is not supported in arrays");
     }
 }
 
 void Array::copyElements(char *&buffer) {
-    if (type == mlir::Type::INTEGER) {
-        writeToBuffer(buffer, reinterpret_cast<int32_t*>(this->elements), this->numberElements);
-    } else if (type == mlir::Type::BIGINTEGER) {
-        writeToBuffer(buffer, reinterpret_cast<int64_t*>(this->elements), this->numberElements);
-    } else if (type == mlir::Type::FLOAT) {
-        writeToBuffer(buffer, reinterpret_cast<float*>(this->elements), this->numberElements);
-    } else if (type == mlir::Type::DOUBLE) {
-        writeToBuffer(buffer, reinterpret_cast<double*>(this->elements), this->numberElements);
-    } else if (type == mlir::Type::STRING) {
-        writeToBuffer(buffer, reinterpret_cast<uint32_t*>(this->elements), this->numberElements);
-    } else {
+    if (this->size == 0) return;
+    switch (this->type) {
+    case ArrayType::INTEGER32:
+        writeToBuffer(buffer, reinterpret_cast<int32_t*>(this->elements), this->size);
+        break;
+    case ArrayType::INTEGER64:
+        writeToBuffer(buffer, reinterpret_cast<int64_t*>(this->elements), this->size);
+        break;
+    case ArrayType::FLOAT:
+        writeToBuffer(buffer, reinterpret_cast<float*>(this->elements), this->size);
+        break;
+    case ArrayType::DOUBLE:
+        writeToBuffer(buffer, reinterpret_cast<double*>(this->elements), this->size);
+        break;
+    case ArrayType::STRING:
+        writeToBuffer(buffer, reinterpret_cast<uint32_t*>(this->elements), this->size);
+        break;
+    default:
         throw std::runtime_error("Given type is not supported in arrays");
     }
 }
 
 void Array::copyElement(char *&buffer, uint32_t position) {
-    if (this->numberElements <= position) {
-        throw std::runtime_error("Array-Element does not exist");
+    if (this->size <= position) {
+        throw std::runtime_error("Requested array element does not exist");
     }
-    if (type == mlir::Type::INTEGER) {
+    switch (this->type) {
+    case ArrayType::INTEGER32: 
+    {
         int32_t *value = reinterpret_cast<int32_t*>(this->elements) + position;
         writeToBuffer(buffer, value, 1);
-    } else if (type == mlir::Type::BIGINTEGER) {
+        break;
+    }
+    case ArrayType::INTEGER64: 
+    {
         int64_t *value = reinterpret_cast<int64_t*>(this->elements) + position;
         writeToBuffer(buffer, value, 1);
-    } else if (type == mlir::Type::FLOAT) {
+        break;
+    }
+    case ArrayType::FLOAT: 
+    {
         float *value = reinterpret_cast<float*>(this->elements) + position;
         writeToBuffer(buffer, value, 1);
-    } else if (type == mlir::Type::DOUBLE) {
+        break;
+    }
+    case ArrayType::DOUBLE: 
+    {
         double *value = reinterpret_cast<double*>(this->elements) + position;
         writeToBuffer(buffer, value, 1);
-    } else if (type == mlir::Type::STRING) {
+        break;
+    }
+    case ArrayType::STRING: 
+    {
         uint32_t *value = reinterpret_cast<uint32_t*>(this->elements) + position;
         writeToBuffer(buffer, value, 1);
-    } else {
+        break;
+    }
+    default:
         throw std::runtime_error("Given type is not supported in arrays");
     }
 }
 
 void Array::copyStrings(char *&buffer) {
-    if (type != mlir::Type::STRING) {
-        return;
-    }
+    if (type != ArrayType::STRING) return;
     size_t size = getStringLength();
     writeToBuffer(buffer, this->strings, size);
 }
 
 void Array::copyString(char *&buffer, uint32_t position) {
-    if (this->numberElements <= position) {
-        throw std::runtime_error("Array-Element does not exist");
+    if (this->size <= position) {
+        throw std::runtime_error("Requested array element does not exist");
     }
-    uint32_t *sizes = reinterpret_cast<uint32_t*>(this->elements);
+    uint32_t *lengths = reinterpret_cast<uint32_t*>(this->elements);
     uint32_t offset = 0;
+    // Iterate over string lengths to get position of first character
     for (size_t i = 0; i < position; i++) {
-        offset += sizes[i];
+        offset += lengths[i];
     }
-    writeToBuffer(buffer, this->strings + offset, sizes[position]);
+    writeToBuffer(buffer, this->strings + offset, lengths[position]);
 }
 
 template<>
@@ -187,17 +208,17 @@ void Array::castAndCopyElement<std::string>(char *&buffer, std::string &value) {
 }
 
 uint32_t Array::getElementPosition(uint32_t position) {
-    auto totalElements = getNumberElements(true);
-    if (totalElements <= position) {
-        throw std::runtime_error("Array-Element does not exist");
+    auto size = getSize(true);
+    if (size <= position) {
+        throw std::runtime_error("Requested array element does not exist");
     }
     return position - countNulls(position);
 }
 
 template<>
 void Array::toString<int32_t>(uint32_t position, std::string &target) {
-    if (this->numberElements <= position) {
-        throw std::runtime_error("Array-Element does not exist");
+    if (this->size <= position) {
+        throw std::runtime_error("Requested array element does not exist");
     }
     int32_t value = *reinterpret_cast<int32_t*>(this->elements + position * sizeof(int32_t));
     target.append(std::to_string(value));
@@ -205,8 +226,8 @@ void Array::toString<int32_t>(uint32_t position, std::string &target) {
 
 template<>
 void Array::toString<int64_t>(uint32_t position, std::string &target) {
-    if (this->numberElements <= position) {
-        throw std::runtime_error("Array-Element does not exist");
+    if (this->size <= position) {
+        throw std::runtime_error("Requested array element does not exist");
     }
     int64_t value = *reinterpret_cast<int64_t*>(this->elements + position * sizeof(int64_t));
     target.append(std::to_string(value));
@@ -214,8 +235,8 @@ void Array::toString<int64_t>(uint32_t position, std::string &target) {
 
 template<>
 void Array::toString<float>(uint32_t position, std::string &target) {
-    if (this->numberElements <= position) {
-        throw std::runtime_error("Array-Element does not exist");
+    if (this->size <= position) {
+        throw std::runtime_error("Requested array element does not exist");
     }
     float value = *reinterpret_cast<float*>(this->elements + position * sizeof(float));
     target.append(std::to_string(value));
@@ -223,8 +244,8 @@ void Array::toString<float>(uint32_t position, std::string &target) {
 
 template<>
 void Array::toString<double>(uint32_t position, std::string &target) {
-    if (this->numberElements <= position) {
-        throw std::runtime_error("Array-Element does not exist");
+    if (this->size <= position) {
+        throw std::runtime_error("Requested array element does not exist");
     }
     double value = *reinterpret_cast<double*>(this->elements + position * sizeof(double));
     target.append(std::to_string(value));
@@ -232,28 +253,26 @@ void Array::toString<double>(uint32_t position, std::string &target) {
 
 template<>
 void Array::toString<std::string>(uint32_t position, std::string &target) {
-    if (this->numberElements <= position) {
-        throw std::runtime_error("Array-Element does not exist");
+    if (this->size <= position) {
+        throw std::runtime_error("Requested array element does not exist");
     }
-    auto *stringLengths = reinterpret_cast<uint32_t*>(this->elements);
-    size_t prevLength = 0;
+    auto *lengths = reinterpret_cast<uint32_t*>(this->elements);
+    uint32_t offset = 0;
 
-    for (size_t i = 0; i < (size_t) position; i++) {
-        prevLength += stringLengths[i];
+    for (uint32_t i = 0; i < position; i++) {
+        offset += lengths[i];
     }
-    std::string value = std::string(this->strings + prevLength, stringLengths[position]);
+    std::string value = std::string(this->strings + offset, lengths[position]);
     target.append("\"");
     target.append(value);
     target.append("\"");
 }
 
 bool Array::hasEmptyValue() {
-    auto size = getMetadataLength();
-    // Iterate over each metadata entry and check element-length and dimension-length
-    for (size_t i = 0; i < size * 3; i += 3) {
-        if (this->metadata[i+1] == 0 && this->metadata[i+2] == 0) {
-            return true;
-        }
+    auto size = getWidthSize();
+    // Iterate over each width entry
+    for (uint32_t i = 0; i < size; i++) {
+        if (this->widths[i] == 0) return true;
     }
     return false;
 }

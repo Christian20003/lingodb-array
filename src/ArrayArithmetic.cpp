@@ -2,7 +2,7 @@
 
 using lingodb::runtime::Array;
 
-lingodb::runtime::VarLen32 Array::operator+(Array &other) {
+/* lingodb::runtime::VarLen32 Array::operator+(Array &other) {
     if (!isNumericType()) {
         throw std::runtime_error("Array-Add: Given element type is not numeric");
     }
@@ -329,4 +329,4 @@ lingodb::runtime::VarLen32 Array::matrixMul(Array &other) {
     }
 
     return VarLen32::fromString(result);
-}
+} */
