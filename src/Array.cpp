@@ -21,9 +21,6 @@ Array::Array(std::string &array, int32_t type) {
     data += 1;
     this->type = typeId;
     initArray(data);
-    if (type == ArrayType::INTEGER32) {
-        printData();
-    }
 }
 
 Array::Array(std::string &array) {
@@ -41,6 +38,9 @@ Array::Array(std::string &array) {
     this->type = *data;
     data += 1;
     initArray(data);
+    if (type == ArrayType::INTEGER32) {
+        printData();
+    }
 }
 
 void Array::initArray(char *data) {

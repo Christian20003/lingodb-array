@@ -2,44 +2,36 @@
 
 using lingodb::runtime::Array;
 
-/* template<>
+template<>
 lingodb::runtime::VarLen32 Array::appendElement(std::string value) {
-    std::string result = "";
-    size_t size = getStringSize(
-        this->numberDimensions, 
-        this->numberElements + 1,
-        getMetadataLength(),
-        getNullBytes(getNumberElements(true) + 1),
-        getStringLength() + value.size(),
-        type
-    );
+    // Variables that will change in new array
+    auto numberElements = this->size + 1;
+    auto totalElements = getSize(true) + 1;
+    auto widthSize = getWidthSize();
+    auto lastWidth = this->widths[widthSize-1] + 1;
+    uint32_t length = value.length();
+    auto stringLengths = getStringLength() + length;
 
+    std::string result;
+    size_t size = getStringSize(this->dimensions, numberElements, widthSize, getNullBytes(totalElements), stringLengths, this->type);
     result.resize(size);
     char *buffer = result.data();
-    uint32_t numberElements = this->numberElements + 1;
-    writeToBuffer(buffer, &this->numberDimensions, 1);
+
+    // Write complete content to result string
+    writeToBuffer(buffer, ARRAYHEADER.data(), ARRAYHEADER.length());
+    writeToBuffer(buffer, &this->type, 1);
+    writeToBuffer(buffer, &this->dimensions, 1);
     writeToBuffer(buffer, &numberElements, 1);
-    writeToBuffer(buffer, this->metadataLengths, this->numberDimensions);
-    for (size_t i = 1; i <= this->numberDimensions; i++) {
-        const uint32_t *metadata = getFirstEntry(i);
-        uint32_t metadataLength = getMetadataLength(i);
-        uint32_t newLength = metadata[metadataLength * 3 - 2] + 1;
-        writeToBuffer(buffer, metadata, (metadataLength - 1) * 3);
-        writeToBuffer(buffer, &metadata[metadataLength * 3 - 3], 1);
-        writeToBuffer(buffer, &newLength, 1);
-        writeToBuffer(buffer, &metadata[metadataLength * 3 - 1], 1);
-    }
+    writeToBuffer(buffer, this->indices, this->dimensions);
+    writeToBuffer(buffer, this->dimensionWidthMap, this->dimensions);
+    writeToBuffer(buffer, this->widths, widthSize-1);
+    writeToBuffer(buffer, &lastWidth, 1);
     copyElements(buffer);
-    uint32_t stringSize = value.size();
-    writeToBuffer(buffer, &stringSize, 1);
-    writeToBuffer(buffer, this->nulls, getNullBytes(this->metadata[1]));
-
-    if (this->metadata[1] % 8 == 0) {
-        buffer++;
-    }
+    writeToBuffer(buffer, &length, 1);
+    copyNulls(buffer, this->nulls, totalElements, 0);
     copyStrings(buffer);
-    writeToBuffer(buffer, value.data(), stringSize);
-
+    writeToBuffer(buffer, value.data(), length);
+    
     return VarLen32::fromString(result);
 };
 
@@ -48,124 +40,103 @@ lingodb::runtime::VarLen32 Array::append(Array &toAppend) {
     if (this->type != toAppend.getType()) {
         throw std::runtime_error("Array-Append: Arrays have different types");
     }
-    if (this->numberDimensions < toAppend.getDimension()) {
+    if (this->dimensions < toAppend.getDimension()) {
         throw std::runtime_error("Array-Append: Right array has more dimensions than left array");
     }
 
-    uint32_t leftDimension = this->numberDimensions;
-    uint32_t rightDimension = toAppend.getDimension();
+    auto leftDimension = this->dimensions;
+    auto rightDimension = toAppend.getDimension();
 
-    uint32_t leftElements = this->numberElements;
-    uint32_t leftTotalElements = this->metadata[1];
-    uint32_t rightElements = toAppend.getNumberElements();
-    uint32_t rightTotalElements = toAppend.getNumberElements(true);
+    auto leftElements = getSize();
+    auto leftTotalElements = getSize(true);
+    auto rightElements = toAppend.getSize();
+    auto rightTotalElements = toAppend.getSize(true);
 
-    uint32_t leftStringLength = getStringLength();
-    uint32_t rightStringLength = toAppend.getStringLength();
+    auto leftStringLength = getStringLength();
+    auto rightStringLength = toAppend.getStringLength();
 
-    // result will store the extended array
-    std::string result = "";
-    uint32_t newMetadataSize = getMetadataLength();
-    if (this->numberDimensions == toAppend.getDimension()) {
-        newMetadataSize += toAppend.getMetadataLength() - 1;
-    } else {
-        newMetadataSize += toAppend.getMetadataLength();
-    }
+    auto widthSize = getWidthSize() + toAppend.getWidthSize();
+    // First dimension of right will not be copied to left if both have the same number of dimensions
+    if (leftDimension == rightDimension) widthSize--;
+
     // First step: calculate the new size of the resulting string
-    size_t size = getStringSize(
+    auto size = getStringSize(
         leftDimension, 
         leftElements + rightElements,
-        newMetadataSize,
+        widthSize,
         getNullBytes(leftTotalElements + rightTotalElements),
         leftStringLength + rightStringLength,
         type
     );
+    // result will store the extended array
+    std::string result;
     result.resize(size);
     char *buffer = result.data();
+
+    // Add identifier and type
+    writeToBuffer(buffer, ARRAYHEADER.data(), ARRAYHEADER.length());
+    writeToBuffer(buffer, &this->type, 1);
 
     // Add number dimensions and elements to the result
     uint32_t numberElements = leftElements + rightElements;
     writeToBuffer(buffer, &leftDimension, 1);
     writeToBuffer(buffer, &numberElements, 1);
 
-    // Add metadata lengths to the result
-    // The number of entries will be the same as on the left
+    // Add indicies
+    writeToBuffer(buffer, this->indices, leftDimension);
+
+    // Add width lengths to the result
     uint32_t leftIdx = 1;
     uint32_t rightIdx = 1;
-    for (size_t i = leftDimension; i > 0; i--) {
-        // Append right to next higher dimension on left (right will be new child)
-        uint32_t newLength = getMetadataLength(leftIdx);
-        if (rightDimension == i && rightDimension < leftDimension) {
-            newLength += toAppend.getMetadataLength(rightIdx);
-            writeToBuffer(buffer, &newLength, 1);
+    // Iterate over every dimension
+    for (uint32_t i = leftDimension; i > 0; i--) {
+        auto size = getWidthSize(leftIdx);
+        if (rightDimension == i && rightDimension == leftDimension) {
+            // Left and right have same dimension. First width if right will be ignored
+            writeToBuffer(buffer, &size, 1);
             rightIdx++;
-        // Left and right have same dimension. Append all childs from right to left
-        } else if (rightDimension == i) {
-            writeToBuffer(buffer, &newLength, 1);
-            rightIdx++;
-        // Left has much more dimensions than right (Copy values from left)
         } else if (rightDimension < i) {
-            writeToBuffer(buffer, &newLength, 1);
-        // toAppendwise copy new child metadata length values
+            // Right does not have any widths in this dimension
+            writeToBuffer(buffer, &size, 1);
         } else {
-            newLength += toAppend.getMetadataLength(rightIdx);
-            writeToBuffer(buffer, &newLength, 1);
+            // All width entries of right will be copied to left
+            size += toAppend.getWidthSize(rightIdx);
+            writeToBuffer(buffer, &size, 1);
             rightIdx++;
         }
         leftIdx++;
     }
 
-    // Add metadata entries to the result
-    uint32_t leftMetadataIdx = 1;
-    uint32_t rightMetadataIdx = 1;
-    bool onlyAppend = false;
-    for (size_t i = leftDimension; i > 0; i--) {
-        const uint32_t *leftMetadata = getFirstEntry(leftMetadataIdx);
-        const uint32_t *rightMetadata = toAppend.getFirstEntry(rightMetadataIdx);
-        uint32_t leftMetadataLength = getMetadataLength(leftMetadataIdx);
-        uint32_t rightMetadataLength = toAppend.getMetadataLength(rightMetadataIdx);
-        // Check if dimension level is reached to append array structures from right
-        if (rightDimension <= i && !onlyAppend) {
-            // Iterate over each metadata entry from left in current dimension
-            for (size_t j = 0; j < leftMetadataLength * 3; j += 3) {
-                // Check if last entry is selected
-                if (j + 3 == leftMetadataLength * 3) {
-                    // Adjust its element length value
-                    writeToBuffer(buffer, &leftMetadata[j], 1);
-                    uint32_t newElemLength = leftMetadata[j+1] + rightMetadata[1];
-                    writeToBuffer(buffer, &newElemLength, 1);
-                    // If left has more dimensions than right, append rights entries as new childs to the 
-                    // next higher dimension of left
-                    if (rightDimension + 1 == i) {
-                        uint32_t newDimLength = leftMetadata[j+2] + 1;
-                        writeToBuffer(buffer, &newDimLength, 1);
-                        onlyAppend = true;
-                    // If in the same dimension level
-                    } else if (rightDimension == i) {
-                        uint32_t newDimLength = leftMetadata[j+2] + rightMetadata[2];
-                        writeToBuffer(buffer, &newDimLength, 1);
-                        rightMetadataIdx++;
-                    } else {
-                        writeToBuffer(buffer, &leftMetadata[j+2], 1);
-                    }
-                } else {
-                    writeToBuffer(buffer, &leftMetadata[j], 3);
-                }
-            }
+    // Add width entries to the result
+    leftIdx = 1;
+    rightIdx = 1;
+    for (uint32_t i = leftDimension; i > 0; i--) {
+        auto *leftWidths = getFirstWidth(leftIdx);
+        auto *rightWidths = toAppend.getFirstWidth(rightIdx);
+        auto leftWidthSize = getWidthSize(leftIdx);
+        auto rightWidthSize = toAppend.getWidthSize(rightIdx);
+
+        if (rightDimension == i && rightDimension == leftDimension) {
+            // Both arrays have equal dimensions -> combine both width values
+            auto newWidth = leftWidths[0] + rightWidths[0];
+            writeToBuffer(buffer, &newWidth, 1);
+            rightIdx++;
+        } else if (rightDimension+1 == i) {
+            // Left dimension is exactly one level above the right array dimension
+            // Write all left width entries and modify last one
+            writeToBuffer(buffer, leftWidths, leftWidthSize-1);
+            auto newWidth = leftWidths[leftWidthSize-1] + 1;
+            writeToBuffer(buffer, &newWidth, 1);
+        } else if (rightDimension+1 < i) {
+            // Dimension only exist on left array
+            writeToBuffer(buffer, leftWidths, leftWidthSize);
         } else {
-            // Copy metadata entries from left and right
-            // But also adjust element offset of each metadata entry from right
-            uint32_t leftElements = leftMetadata[(leftMetadataLength - 1) * 3] + leftMetadata[(leftMetadataLength - 1) * 3 + 1];
-            writeToBuffer<uint32_t>(buffer, &leftMetadata[0], leftMetadataLength * 3);
-            for (size_t j = 0; j < rightMetadataLength * 3; j += 3) {
-                uint32_t newOffset = rightMetadata[j] + leftElements;
-                writeToBuffer(buffer, &newOffset, 1);
-                writeToBuffer(buffer, &rightMetadata[j+1], 2);
-                newOffset += rightMetadata[j+1];
-            }
-            rightMetadataIdx++;
+            // Both arrays have widths in that dimension
+            writeToBuffer(buffer, leftWidths, leftWidthSize);
+            writeToBuffer(buffer, rightWidths, rightWidthSize);
+            rightIdx++;
         }
-        leftMetadataIdx++;
+        leftIdx++;
     }
     // Add elements to result
     copyElements(buffer);
@@ -188,7 +159,7 @@ lingodb::runtime::VarLen32 Array::append(Array &toAppend) {
 
 template<>
 lingodb::runtime::VarLen32 Array::append(int32_t &toAppend) {
-    if (type != mlir::Type::INTEGER) {
+    if (type != ArrayType::INTEGER32) {
         throw std::runtime_error("Array-Append: Array elements are not of type integer (32-bit)");
     }
     return appendElement(toAppend);
@@ -196,7 +167,7 @@ lingodb::runtime::VarLen32 Array::append(int32_t &toAppend) {
 
 template<>
 lingodb::runtime::VarLen32 Array::append(int64_t &toAppend) {
-    if (type != mlir::Type::BIGINTEGER) {
+    if (type != ArrayType::INTEGER64) {
         throw std::runtime_error("Array-Append: Array elements are not of type integer (64-bit)");
     }
     return appendElement(toAppend);
@@ -204,7 +175,7 @@ lingodb::runtime::VarLen32 Array::append(int64_t &toAppend) {
 
 template<>
 lingodb::runtime::VarLen32 Array::append(float &toAppend) {
-    if (type != mlir::Type::FLOAT) {
+    if (type != ArrayType::FLOAT) {
         throw std::runtime_error("Array-Append: Array elements are not of type float");
     }
     return appendElement(toAppend);
@@ -212,7 +183,7 @@ lingodb::runtime::VarLen32 Array::append(float &toAppend) {
 
 template<>
 lingodb::runtime::VarLen32 Array::append(double &toAppend) {
-    if (type != mlir::Type::DOUBLE) {
+    if (type != ArrayType::DOUBLE) {
         throw std::runtime_error("Array-Append: Array elements are not of type double");
     }
     return appendElement(toAppend);
@@ -220,8 +191,8 @@ lingodb::runtime::VarLen32 Array::append(double &toAppend) {
 
 template<>
 lingodb::runtime::VarLen32 Array::append(std::string &toAppend) {
-    if (type != mlir::Type::STRING) {
+    if (type != ArrayType::STRING) {
         throw std::runtime_error("Array-Append: Array elements are not of type string");
     }
     return appendElement(toAppend);
-} */
+}

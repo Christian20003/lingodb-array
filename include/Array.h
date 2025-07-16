@@ -51,12 +51,12 @@ class Array {
 
     // This enumeration specifies all array element types
     enum ArrayType {
-        INTEGER64 = 2,
-        INTEGER32 = 3,
-        FLOAT = 4,
-        DOUBLE = 5,
-        STRING = 11,
-        BFLOAT = 12
+        INTEGER32,
+        INTEGER64,
+        BFLOAT,
+        FLOAT,
+        DOUBLE,
+        STRING,
     };
 
 /*##########################################################################################################################################################  
@@ -215,7 +215,7 @@ class Array {
      * @throws `std::runtime_error`: If the array type is not supported in this function.
      */
     template<class OP>
-    static void executeBinaryOperation(const uint8_t *left, const uint8_t *right, uint32_t size, char *&buffer, bool scalarLeft, bool scalarRight, mlir::Type type);
+    static void executeBinaryOperation(const uint8_t *left, const uint8_t *right, uint32_t size, char *&buffer, bool scalarLeft, bool scalarRight, uint8_t type);
 
     /**
      * This function executes a specified unary function `OP` with numeric values.
@@ -228,7 +228,7 @@ class Array {
      * @throws `std::runtime_error`: If the array type is not supported in this function.
      */
     template<class OP>
-    static void executeUnaryOperation(const uint8_t *data, uint32_t size, char *&buffer, mlir::Type type);
+    static void executeUnaryOperation(const uint8_t *data, uint32_t size, char *&buffer, uint8_t type);
 
     /**
      * This function generates an array with the given value and structure.

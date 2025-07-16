@@ -2,7 +2,7 @@
 
 using lingodb::runtime::Array;
 
-/* lingodb::runtime::VarLen32 Array::operator+(Array &other) {
+lingodb::runtime::VarLen32 Array::operator+(Array &other) {
     if (!isNumericType()) {
         throw std::runtime_error("Array-Add: Given element type is not numeric");
     }
@@ -15,22 +15,26 @@ using lingodb::runtime::Array;
     if (hasEmptyValue() || other.hasEmptyValue()) {
         throw std::runtime_error("Array-Add: Empty array elements are not allowed");
     }
-    if (!equalMetadata(other.getMetadata())) {
+    if (!equalWidths(other.getWidths())) {
         throw std::runtime_error("Array-Add: Given arrays have different structures");
     }
 
     std::string result;
-    auto size = getStringSize(this->numberDimensions, this->numberElements, getMetadataLength(), getNullBytes(this->numberElements), 0, type);
+    auto size = getStringSize(this->dimensions, this->size, getWidthSize(), getNullBytes(this->size), 0, type);
     result.resize(size);
     char *buffer = result.data();
 
-    writeToBuffer(buffer, &this->numberDimensions, 1);
-    writeToBuffer(buffer, &this->numberElements, 1);
-    writeToBuffer(buffer, this->metadataLengths, this->numberDimensions + getMetadataLength() * 3);
+    writeToBuffer(buffer, ARRAYHEADER.data(), ARRAYHEADER.length());
+    writeToBuffer(buffer, &this->type, 1);
+    writeToBuffer(buffer, &this->dimensions, 1);
+    writeToBuffer(buffer, &this->size, 1);
+    writeToBuffer(buffer, this->indices, this->dimensions);
+    writeToBuffer(buffer, this->dimensionWidthMap, this->dimensions);
+    writeToBuffer(buffer, this->widths, getWidthSize());
 
-    executeBinaryOperation<ArrayAddOperator>(this->elements, other.getElements(), this->numberElements, buffer, false, false, type);
+    executeBinaryOperation<ArrayAddOperator>(this->elements, other.getElements(), this->size, buffer, false, false, type);
 
-    copyNulls(buffer, this->nulls, this->numberElements, 0);
+    copyNulls(buffer, this->nulls, this->size, 0);
 
     return VarLen32::fromString(result);
 }
@@ -48,22 +52,26 @@ lingodb::runtime::VarLen32 Array::operator-(Array &other) {
     if (hasEmptyValue() || other.hasEmptyValue()) {
         throw std::runtime_error("Array-Sub: Empty array elements are not allowed");
     }
-    if (!equalMetadata(other.getMetadata())) {
+    if (!equalWidths(other.getWidths())) {
         throw std::runtime_error("Array-Sub: Given arrays have different structures");
     }
 
     std::string result;
-    auto size = getStringSize(this->numberDimensions, this->numberElements, getMetadataLength(), getNullBytes(this->numberElements), 0, type);
+    auto size = getStringSize(this->dimensions, this->size, getWidthSize(), getNullBytes(this->size), 0, type);
     result.resize(size);
     char *buffer = result.data();
 
-    writeToBuffer(buffer, &this->numberDimensions, 1);
-    writeToBuffer(buffer, &this->numberElements, 1);
-    writeToBuffer(buffer, this->metadataLengths, this->numberDimensions + getMetadataLength() * 3);
+    writeToBuffer(buffer, ARRAYHEADER.data(), ARRAYHEADER.length());
+    writeToBuffer(buffer, &this->type, 1);
+    writeToBuffer(buffer, &this->dimensions, 1);
+    writeToBuffer(buffer, &this->size, 1);
+    writeToBuffer(buffer, this->indices, this->dimensions);
+    writeToBuffer(buffer, this->dimensionWidthMap, this->dimensions);
+    writeToBuffer(buffer, this->widths, getWidthSize());
 
-    executeBinaryOperation<ArraySubOperator>(this->elements, other.getElements(), this->numberElements, buffer, false, false, type);
+    executeBinaryOperation<ArraySubOperator>(this->elements, other.getElements(), this->size, buffer, false, false, type);
 
-    copyNulls(buffer, this->nulls, this->numberElements, 0);
+    copyNulls(buffer, this->nulls, this->size, 0);
 
     return VarLen32::fromString(result);
 }
@@ -81,22 +89,26 @@ lingodb::runtime::VarLen32 Array::operator*(Array &other) {
     if (hasEmptyValue() || other.hasEmptyValue()) {
         throw std::runtime_error("Array-Mul: Empty array elements are not allowed");
     }
-    if (!equalMetadata(other.getMetadata())) {
+    if (!equalWidths(other.getWidths())) {
         throw std::runtime_error("Array-Mul: Given arrays have different structures");
     }
 
     std::string result;
-    auto size = getStringSize(this->numberDimensions, this->numberElements, getMetadataLength(), getNullBytes(this->numberElements), 0, type);
+    auto size = getStringSize(this->dimensions, this->size, getWidthSize(), getNullBytes(this->size), 0, type);
     result.resize(size);
     char *buffer = result.data();
 
-    writeToBuffer(buffer, &this->numberDimensions, 1);
-    writeToBuffer(buffer, &this->numberElements, 1);
-    writeToBuffer(buffer, this->metadataLengths, this->numberDimensions + getMetadataLength() * 3);
+    writeToBuffer(buffer, ARRAYHEADER.data(), ARRAYHEADER.length());
+    writeToBuffer(buffer, &this->type, 1);
+    writeToBuffer(buffer, &this->dimensions, 1);
+    writeToBuffer(buffer, &this->size, 1);
+    writeToBuffer(buffer, this->indices, this->dimensions);
+    writeToBuffer(buffer, this->dimensionWidthMap, this->dimensions);
+    writeToBuffer(buffer, this->widths, getWidthSize());
 
-    executeBinaryOperation<ArrayMulOperator>(this->elements, other.getElements(), this->numberElements, buffer, false, false, type);
+    executeBinaryOperation<ArrayMulOperator>(this->elements, other.getElements(), this->size, buffer, false, false, type);
 
-    copyNulls(buffer, this->nulls, this->numberElements, 0);
+    copyNulls(buffer, this->nulls, this->size, 0);
 
     return VarLen32::fromString(result);
 }
@@ -114,29 +126,33 @@ lingodb::runtime::VarLen32 Array::operator/(Array &other) {
     if (hasEmptyValue() || other.hasEmptyValue()) {
         throw std::runtime_error("Array-Div: Empty array elements are not allowed");
     }
-    if (!equalMetadata(other.getMetadata())) {
+    if (!equalWidths(other.getWidths())) {
         throw std::runtime_error("Array-Div: Given arrays have different structures");
     }
 
     std::string result;
-    auto size = getStringSize(this->numberDimensions, this->numberElements, getMetadataLength(), getNullBytes(this->numberElements), 0, type);
+    auto size = getStringSize(this->dimensions, this->size, getWidthSize(), getNullBytes(this->size), 0, type);
     result.resize(size);
     char *buffer = result.data();
 
-    writeToBuffer(buffer, &this->numberDimensions, 1);
-    writeToBuffer(buffer, &this->numberElements, 1);
-    writeToBuffer(buffer, this->metadataLengths, this->numberDimensions + getMetadataLength() * 3);
+    writeToBuffer(buffer, ARRAYHEADER.data(), ARRAYHEADER.length());
+    writeToBuffer(buffer, &this->type, 1);
+    writeToBuffer(buffer, &this->dimensions, 1);
+    writeToBuffer(buffer, &this->size, 1);
+    writeToBuffer(buffer, this->indices, this->dimensions);
+    writeToBuffer(buffer, this->dimensionWidthMap, this->dimensions);
+    writeToBuffer(buffer, this->widths, getWidthSize());
 
-    executeBinaryOperation<ArrayDivOperator>(this->elements, other.getElements(), this->numberElements, buffer, false, false, type);
+    executeBinaryOperation<ArrayDivOperator>(this->elements, other.getElements(), this->size, buffer, false, false, type);
 
-    copyNulls(buffer, this->nulls, this->numberElements, 0);
+    copyNulls(buffer, this->nulls, this->size, 0);
 
     return VarLen32::fromString(result);
 }
 
 template<>
 lingodb::runtime::VarLen32 Array::scalarAdd(int32_t value) {
-    if (type != mlir::Type::INTEGER) {
+    if (type != ArrayType::INTEGER32) {
         throw std::runtime_error("Array-Add: Array elements are not of type integer (32-bit)");
     }
     return executeScalarOperation<int32_t, ArrayAddOperator>(value, true);
@@ -144,7 +160,7 @@ lingodb::runtime::VarLen32 Array::scalarAdd(int32_t value) {
 
 template<>
 lingodb::runtime::VarLen32 Array::scalarAdd(int64_t value) {
-    if (type != mlir::Type::BIGINTEGER) {
+    if (type != ArrayType::INTEGER64) {
         throw std::runtime_error("Array-Add: Array elements are not of type integer (64-bit)");
     }
     return executeScalarOperation<int64_t, ArrayAddOperator>(value, true);
@@ -152,7 +168,7 @@ lingodb::runtime::VarLen32 Array::scalarAdd(int64_t value) {
 
 template<>
 lingodb::runtime::VarLen32 Array::scalarAdd(float value) {
-    if (type != mlir::Type::FLOAT) {
+    if (type != ArrayType::FLOAT) {
         throw std::runtime_error("Array-Add: Array elements are not of type float");
     }
     return executeScalarOperation<float, ArrayAddOperator>(value, true);
@@ -160,7 +176,7 @@ lingodb::runtime::VarLen32 Array::scalarAdd(float value) {
 
 template<>
 lingodb::runtime::VarLen32 Array::scalarAdd(double value) {
-    if (type != mlir::Type::DOUBLE) {
+    if (type != ArrayType::DOUBLE) {
         throw std::runtime_error("Array-Add: Array elements are not of type double");
     }
     return executeScalarOperation<double, ArrayAddOperator>(value, true);
@@ -168,7 +184,7 @@ lingodb::runtime::VarLen32 Array::scalarAdd(double value) {
 
 template<>
 lingodb::runtime::VarLen32 Array::scalarSub(int32_t value, bool isLeft) {
-    if (type != mlir::Type::INTEGER) {
+    if (type != ArrayType::INTEGER32) {
         throw std::runtime_error("Array-Add: Array elements are not of type integer (32-bit)");
     }
     return executeScalarOperation<int32_t, ArraySubOperator>(value, isLeft);
@@ -176,7 +192,7 @@ lingodb::runtime::VarLen32 Array::scalarSub(int32_t value, bool isLeft) {
 
 template<>
 lingodb::runtime::VarLen32 Array::scalarSub(int64_t value, bool isLeft) {
-    if (type != mlir::Type::BIGINTEGER) {
+    if (type != ArrayType::INTEGER64) {
         throw std::runtime_error("Array-Add: Array elements are not of type integer (64-bit)");
     }
     return executeScalarOperation<int64_t, ArraySubOperator>(value, isLeft);
@@ -184,7 +200,7 @@ lingodb::runtime::VarLen32 Array::scalarSub(int64_t value, bool isLeft) {
 
 template<>
 lingodb::runtime::VarLen32 Array::scalarSub(float value, bool isLeft) {
-    if (type != mlir::Type::FLOAT) {
+    if (type != ArrayType::FLOAT) {
         throw std::runtime_error("Array-Add: Array elements are not of type float");
     }
     return executeScalarOperation<float, ArraySubOperator>(value, isLeft);
@@ -192,7 +208,7 @@ lingodb::runtime::VarLen32 Array::scalarSub(float value, bool isLeft) {
 
 template<>
 lingodb::runtime::VarLen32 Array::scalarSub(double value, bool isLeft) {
-    if (type != mlir::Type::DOUBLE) {
+    if (type != ArrayType::DOUBLE) {
         throw std::runtime_error("Array-Add: Array elements are not of type double");
     }
     return executeScalarOperation<double, ArraySubOperator>(value, isLeft);
@@ -200,7 +216,7 @@ lingodb::runtime::VarLen32 Array::scalarSub(double value, bool isLeft) {
 
 template<>
 lingodb::runtime::VarLen32 Array::scalarMul(int32_t value) {
-    if (type != mlir::Type::INTEGER) {
+    if (type != ArrayType::INTEGER32) {
         throw std::runtime_error("Array-Add: Array elements are not of type integer (32-bit)");
     }
     return executeScalarOperation<int32_t, ArrayMulOperator>(value, true);
@@ -208,7 +224,7 @@ lingodb::runtime::VarLen32 Array::scalarMul(int32_t value) {
 
 template<>
 lingodb::runtime::VarLen32 Array::scalarMul(int64_t value) {
-    if (type != mlir::Type::BIGINTEGER) {
+    if (type != ArrayType::INTEGER64) {
         throw std::runtime_error("Array-Add: Array elements are not of type integer (64-bit)");
     }
     return executeScalarOperation<int64_t, ArrayMulOperator>(value, true);
@@ -216,7 +232,7 @@ lingodb::runtime::VarLen32 Array::scalarMul(int64_t value) {
 
 template<>
 lingodb::runtime::VarLen32 Array::scalarMul(float value) {
-    if (type != mlir::Type::FLOAT) {
+    if (type != ArrayType::FLOAT) {
         throw std::runtime_error("Array-Add: Array elements are not of type float");
     }
     return executeScalarOperation<float, ArrayMulOperator>(value, true);
@@ -224,7 +240,7 @@ lingodb::runtime::VarLen32 Array::scalarMul(float value) {
 
 template<>
 lingodb::runtime::VarLen32 Array::scalarMul(double value) {
-    if (type != mlir::Type::DOUBLE) {
+    if (type != ArrayType::DOUBLE) {
         throw std::runtime_error("Array-Add: Array elements are not of type double");
     }
     return executeScalarOperation<double, ArrayMulOperator>(value, true);
@@ -232,7 +248,7 @@ lingodb::runtime::VarLen32 Array::scalarMul(double value) {
 
 template<>
 lingodb::runtime::VarLen32 Array::scalarDiv(int32_t value, bool isLeft) {
-    if (type != mlir::Type::INTEGER) {
+    if (type != ArrayType::INTEGER32) {
         throw std::runtime_error("Array-Add: Array elements are not of type integer (32-bit)");
     }
     return executeScalarOperation<int32_t, ArrayDivOperator>(value, isLeft);
@@ -240,7 +256,7 @@ lingodb::runtime::VarLen32 Array::scalarDiv(int32_t value, bool isLeft) {
 
 template<>
 lingodb::runtime::VarLen32 Array::scalarDiv(int64_t value, bool isLeft) {
-    if (type != mlir::Type::BIGINTEGER) {
+    if (type != ArrayType::INTEGER64) {
         throw std::runtime_error("Array-Add: Array elements are not of type integer (64-bit)");
     }
     return executeScalarOperation<int64_t, ArrayDivOperator>(value, isLeft);
@@ -248,7 +264,7 @@ lingodb::runtime::VarLen32 Array::scalarDiv(int64_t value, bool isLeft) {
 
 template<>
 lingodb::runtime::VarLen32 Array::scalarDiv(float value, bool isLeft) {
-    if (type != mlir::Type::FLOAT) {
+    if (type != ArrayType::FLOAT) {
         throw std::runtime_error("Array-Add: Array elements are not of type float");
     }
     return executeScalarOperation<float, ArrayDivOperator>(value, isLeft);
@@ -256,7 +272,7 @@ lingodb::runtime::VarLen32 Array::scalarDiv(float value, bool isLeft) {
 
 template<>
 lingodb::runtime::VarLen32 Array::scalarDiv(double value, bool isLeft) {
-    if (type != mlir::Type::DOUBLE) {
+    if (type != ArrayType::DOUBLE) {
         throw std::runtime_error("Array-Add: Array elements are not of type double");
     }
     return executeScalarOperation<double, ArrayDivOperator>(value, isLeft);
@@ -266,7 +282,7 @@ lingodb::runtime::VarLen32 Array::matrixMul(Array &other) {
     if (!isFloatingPointType()) {
         throw std::runtime_error("Array-MatrixMul: Given element type must be a floating point type");
     }
-    if (type != other.getType()) {
+    if (this->type != other.getType()) {
         throw std::runtime_error("Array-MatrixMul: Arrays have different types");
     }
     if (hasNullValue() || other.hasNullValue()) {
@@ -278,16 +294,16 @@ lingodb::runtime::VarLen32 Array::matrixMul(Array &other) {
     if (!isSymmetric() || !other.isSymmetric()) {
         throw std::runtime_error("Array-MatrixMul: This function allows only symmetric arrays");
     }
-    uint32_t otherDimension = other.getDimension();
-    const uint32_t *otherMetadata = other.getMetadata();
-    if (this->numberDimensions > 2 || otherDimension > 2) {
+    auto otherDimension = other.getDimension();
+    auto *otherWidths = other.getWidths();
+    if (this->dimensions > 2 || otherDimension > 2) {
         throw std::runtime_error("Array-MatrixMul: This function allows only up to 2 dimensional arrays");
     }
 
-    uint32_t rowsA = this->numberDimensions == 1 ? this->metadata[1] : this->metadata[2];
-    uint32_t colsA = this->numberDimensions == 1 ? 1 : this->metadata[4];
-    uint32_t rowsB = otherDimension == 1 ? otherMetadata[1] : otherMetadata[2];
-    uint32_t colsB = otherDimension == 1 ? 1 : otherMetadata[4];
+    auto rowsA = this->widths[0];
+    auto colsA = this->dimensions == 1 ? 1 : this->widths[1];
+    auto rowsB = otherWidths[0];
+    auto colsB = otherDimension == 1 ? 1 : otherWidths[1];
 
     if (colsA != rowsB) {
         throw std::runtime_error("Array-MatrixMul: Array-structures are not compatible for this function");
@@ -295,30 +311,29 @@ lingodb::runtime::VarLen32 Array::matrixMul(Array &other) {
 
     uint32_t dimension = 2;
     uint32_t elements = rowsA * colsB;
-    std::vector<uint32_t> metadataLengths{1, rowsA};
-    std::vector<uint32_t> metadata;
-    metadata.reserve(3*rowsA+3);
-
-    metadata.push_back(0);
-    metadata.push_back(elements);
-    metadata.push_back(rowsA);
-    for (size_t i = 0; i < rowsA; i++) {
-        metadata.push_back(i*colsB);
-        metadata.push_back(colsB);
-        metadata.push_back(0);
-    }
 
     std::string result;
-    auto size = getStringSize(dimension, elements, 1+rowsA, getNullBytes(elements), 0, type);
+    auto size = getStringSize(dimension, elements, rowsA+1, getNullBytes(elements), 0, type);
     result.resize(size);
     char *buffer = result.data();
 
+    writeToBuffer(buffer, ARRAYHEADER.data(), ARRAYHEADER.length());
+    writeToBuffer(buffer, &this->type, 1);
     writeToBuffer(buffer, &dimension, 1);
     writeToBuffer(buffer, &elements, 1);
-    writeToBuffer(buffer, metadataLengths.data(), metadataLengths.size());
-    writeToBuffer(buffer, metadata.data(), metadata.size());
+    uint32_t index = 1;
+    for (uint32_t i = 0; i < dimension; i++) {
+        writeToBuffer(buffer, &index, 1);
+    }
+    writeToBuffer(buffer, &index, 1);
+    writeToBuffer(buffer, &rowsA, 1);
 
-    if (type == mlir::Type::FLOAT) {
+    writeToBuffer(buffer, &rowsA, 1);
+    for (uint32_t i = 0; i < rowsA; i++) {
+        writeToBuffer(buffer, &colsB, 1);
+    }
+
+    if (this->type == ArrayType::FLOAT) {
         auto *leftVal = reinterpret_cast<const float*>(this->elements);
         auto *rightVal = reinterpret_cast<const float*>(other.getElements());
         MatrixMultiplicationOperator::Operator(leftVal, rightVal, rowsA, rowsB, colsB, buffer);
@@ -329,4 +344,4 @@ lingodb::runtime::VarLen32 Array::matrixMul(Array &other) {
     }
 
     return VarLen32::fromString(result);
-} */
+}
