@@ -132,32 +132,30 @@ class Array {
     uint32_t getElementPosition(uint32_t position);
 
     /**
-     * This method executes a slice operation on metadata level (This method will
-     * be called recursively).
+     * This method executes a slice operation by storing important array information in the
+     * provided vector elements (This method will be called recursively).
      * 
-     * @param metadata A reference to a vector that stores the updated metadata entries.
-     * @param lengths A reference to a vector that stores the updated metadata lengths.
+     * @param widths A reference to a vector that stores the updated width entries.
+     * @param widthSize A reference to a vector that stores the updated dimensionWidthMap entries.
+     * This vector must be filled.
      * @param elements A reference to a vector that stores the position of each element 
      * that should remain (including NULL values).
      * @param lowerBound The index of the first element that should remain.
      * Possible value range `[1:]`.
      * @param upperBound The index of the last element that should remain.
      * Possible value range `[1:]`.
-     * @param sliceDimension The dimension in which the slice operation should take place.
+     * @param sliceDimension The dimension in which the slice operation should happen.
      * @param dimension The current dimension.
-     * @param offset The adjusted offset value.
-     * @param entry A pointer to the metadata element that is processed.
-     * @return The number of elements in the array structure.
+     * @param entry A pointer to the width element that is processed.
      */
-    uint32_t metadataSlice(
-        std::vector<uint32_t> &metadata, 
-        std::vector<uint32_t> &lengths, 
+    void getArraySlice(
+        std::vector<uint32_t> &widths, 
+        std::vector<uint32_t> &widthSize, 
         std::vector<uint32_t> &elements, 
         uint32_t lowerBound, 
         uint32_t upperBound, 
         uint32_t sliceDimension, 
-        uint32_t dimension, 
-        uint32_t offset, 
+        uint32_t dimension,
         const uint32_t *&entry);
 
     /**
@@ -241,7 +239,7 @@ class Array {
      * @return The resulting array as string in array processable format.
      */
     template<class TYPE, class ARRAYTYPE>
-    static VarLen32 generate(TYPE *value, Array &structure, mlir::Type type, uint32_t stringSize = 0);
+    static VarLen32 generate(TYPE *value, Array &structure, uint8_t type, uint32_t stringSize = 0);
 
     /**
      * This function generates an array with the given structure filled with NULL values.
@@ -252,7 +250,7 @@ class Array {
      * @return The resulting array as string in array processable format.
      */
     template<class ARRAYTYPE>
-    static VarLen32 generate(Array &structure, mlir::Type type);
+    static VarLen32 generate(Array &structure, uint8_t type);
 
     /**
      * This method returns the index of the largest value stored in this array.
@@ -282,7 +280,7 @@ class Array {
 
     /**
      * This method transforms the array into its string representation (for printing).
-     * This method will be called recursively over each metadata entry.
+     * This method will be called recursively over each width entry.
      * 
      * @param target A reference to a string in which the result should be stored.
      * @param width A pointer to the width element that is processed.
@@ -593,25 +591,22 @@ class Array {
      * This method executes a slice operation.
      * 
      * @param lowerBound The index of the first element that should remain.
-     * Possible value range `[1:]`.
      * @param upperBound The index of the last element that should remain.
-     * Possible value range `[1:]`.
      * @param dimension The dimension in which the slice operation should take place.
      * @throws `std::runtime_error`: If the given lowerBound is larger than the given upperBound.
      * @return The modified array after the slice operation as string in array processable format. 
      * If the given lowerBound and upperBound are out of range, this method will return an empty 
-     * array in the specified dimension.
+     * array.
      */
     VarLen32 slice(uint32_t lowerBound, uint32_t upperBound, uint32_t dimension);
 
     /**
      * This method executes the subscript operator to get an element of this array.
      * 
-     * @param position The index of the array element that should be returned. Possible
-     * value range `[1:]`.
+     * @param position The index of the array element that should be returned.
      * @return If the array has more than one dimension, it returns another array. If the
      * array has only a single dimension, it returns the element as string. If no
-     * element could be found, it returns an empty string.
+     * element could be found, it returns an empty string (that should be mapped to NULL).
      */
     VarLen32 operator[](uint32_t position);
 

@@ -16,7 +16,7 @@ int main() {
     VarLen32 var2 = VarLen32::fromString(string2);
     var2 = ArrayRuntime::fromString(var2, 5);
     
-    std::string string3 = "{{{2,3,7,8,6,5,3},{6,8}}}";
+    std::string string3 = "{{{2,3,4,5,6}}}";
     VarLen32 var3 = VarLen32::fromString(string3);
     var3 = ArrayRuntime::fromString(var3, 0);
 
@@ -34,12 +34,16 @@ int main() {
     
     // VarLen32 op = ArrayRuntime::append(var2, var2, 5, 5);
     // VarLen32 op = ArrayRuntime::append(var2, 5, var4);
-    // VarLen32 op2 = ArrayRuntime::slice(var1, mlir::Type::INTEGER, 1, 2, 4);
-    // VarLen32 op = ArrayRuntime::subscript(var2, mlir::Type::INTEGER, 1);
+    //VarLen32 op = ArrayRuntime::slice(var1, 0, 2, 3, 1);
+    //VarLen32 op = ArrayRuntime::subscript(var2, 5, 2);
+    //op = ArrayRuntime::subscript(op, 5, 2);
+    //op = ArrayRuntime::subscript(op, 0, 2);
+    //op = ArrayRuntime::subscript(op, 0, 6);
+    //std::cout << op.str() << std::endl;
     // VarLen32 op = ArrayRuntime::mul(var3, var3, 0, 0);
     // VarLen32 op = ArrayRuntime::scalarSub(var3, 0, 5, true);
-    // VarLen32 op = ArrayRuntime::fill(var3, mlir::Type::INTEGER);
-    VarLen32 op = ArrayRuntime::sigmoid(var5, 3);
+    VarLen32 op = ArrayRuntime::fill(var3, 0);
+    // VarLen32 op = ArrayRuntime::sigmoid(var5, 3);
     // VarLen32 op = ArrayRuntime::matrixMul(var6, var5, 3, 3);
     std::string array = op.str();
     // int pos = ArrayRuntime::getHighestPosition(var2, mlir::Type::STRING);

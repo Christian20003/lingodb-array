@@ -177,13 +177,13 @@ void Array::printData() {
         std::cout << this->indices[i] << ",";
     }
     std::cout << std::endl;
-    std::cout << "METADATA-LENGTHS:" << std::endl;
+    std::cout << "WIDTH-LENGTHS:" << std::endl;
     for (size_t i = 0; i < this->dimensions; i++) {
         std::cout << this->dimensionWidthMap[i] << ",";
         metadataLen += this->dimensionWidthMap[i];
     }
     std::cout << std::endl;
-    std::cout << "METADATA-ENTRIES:" << std::endl;
+    std::cout << "WIDTH-ENTRIES:" << std::endl;
     for (size_t i = 0; i < metadataLen; i++) {
         std::cout << this->widths[i] << ","; 
     }

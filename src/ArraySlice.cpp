@@ -2,48 +2,55 @@
 
 using lingodb::runtime::Array;
 
-/* lingodb::runtime::VarLen32 Array::slice(uint32_t lowerBound, uint32_t upperBound, uint32_t dimension) {
+lingodb::runtime::VarLen32 Array::slice(uint32_t lowerBound, uint32_t upperBound, uint32_t dimension) {
+    // lower bound must be smaller than upper bound
     if (lowerBound > upperBound) {
         throw std::runtime_error("Array-Slice: Given lower-bound is larger than given upper-bound");
     }
-    if (dimension > this->numberDimensions) {
+    // Slice in a dimension that does not exist
+    if (dimension > this->dimensions) {
         return createEmptyArray(type);
     }
 
-    // Update metadata
-    std::vector<uint32_t> metadata{0,0,0};
-    std::vector<uint32_t> metadataLengths;
+    // These variables store updated array data
+    std::vector<uint32_t> widths;
+    std::vector<uint32_t> widthSize;
     std::vector<uint32_t> elementIdx;
     std::vector<bool> nulls;
     uint32_t numberElements = 0;
     uint32_t stringLengths = 0;
 
-    metadataLengths.resize(this->numberDimensions, 0);
-    metadataLengths[0] = 1;
-
-    const auto *start = this->metadata;
-    auto totalElements = metadataSlice(metadata, metadataLengths, elementIdx, lowerBound-1, upperBound-1, dimension, 1, 0, start);
-    metadata[1] = totalElements;
-    metadata[2] = metadataLengths[1];
+    // Size of this vector keeps the same as in the current array
+    widthSize.resize(this->dimensions, 0);
+    
+    const auto *start = this->widths;
+    getArraySlice(widths, widthSize, elementIdx, lowerBound, upperBound, dimension, 1, start);
+    // Update width of first dimension
+    widthSize[0] = 1;
+    widths.insert(widths.begin(), widthSize[1]);
     nulls.reserve(elementIdx.size());
 
-    // Get string length and null values
+    // Based on element indicies, fill NULL vector and string length vector
     for (auto &entry : elementIdx) {
         bool null = isNull(entry);
         nulls.push_back(null);
-        if (type == mlir::Type::STRING && !null) {
+        if (type == ArrayType::STRING && !null) {
             stringLengths += getStringLength(getElementPosition(entry));
         }
+        // Also calculate number of elements that are not NULL
         if (!null) numberElements++;
     }
+
+    // If slice did not include any elements, return empty array which has only one dimension
+    auto dimensions = elementIdx.size() == 0 ? 1 : this->dimensions;
 
     // Define result string
     std::string result;
     size_t size = getStringSize(
-        this->numberDimensions,
+        dimensions,
         numberElements,
-        metadata.size() / 3,
-        getNullBytes(totalElements),
+        widths.size(),
+        getNullBytes(nulls.size()),
         stringLengths,
         type
     );
@@ -51,10 +58,36 @@ using lingodb::runtime::Array;
     char *buffer = result.data();
 
     // Write array data into string
-    writeToBuffer(buffer, &this->numberDimensions, 1);
+    writeToBuffer(buffer, ARRAYHEADER.data(), ARRAYHEADER.length());
+    writeToBuffer(buffer, &this->type, 1);
+    writeToBuffer(buffer, &dimensions, 1);
     writeToBuffer(buffer, &numberElements, 1);
-    writeToBuffer(buffer, metadataLengths.data(), this->numberDimensions);
-    writeToBuffer(buffer, metadata.data(), metadata.size());
+
+    // Iterate over each dimension to update dimension indices
+    for (uint32_t i = 0; i < dimensions; i++) {
+        if (elementIdx.size() == 0) {
+            // If slice did not include any elements, return empty array which gets the default index
+            uint32_t value = 1;
+            writeToBuffer(buffer, &value, 1); 
+        } else if (i+1 == dimension) {
+            // If slice dimension reached, use the lower bound as new start index
+            writeToBuffer(buffer, &lowerBound, 1);   
+        } else {
+            // Everything else will get its original index
+            writeToBuffer(buffer, &this->indices[i], 1);
+        }
+    }
+
+    writeToBuffer(buffer, widthSize.data(), dimensions);
+
+    if (elementIdx.size() == 0) {
+        // If slice did not include any elements, return empty array which gets a zero width
+        uint32_t value = 0;
+        writeToBuffer(buffer, &value, 1); 
+    } else {
+        // Otherwise copy all data from widths vector
+        writeToBuffer(buffer, widths.data(), widths.size());
+    }
 
     for (auto &entry : elementIdx) {
         if (!isNull(entry)) {
@@ -63,7 +96,7 @@ using lingodb::runtime::Array;
     }
     copyNulls(buffer, nulls);
 
-    if (type == mlir::Type::STRING) {
+    if (type == ArrayType::STRING) {
         for (size_t i = 0; i < elementIdx.size(); i++) {
             auto j = elementIdx[i];
             if (!isNull(j)) {
@@ -74,72 +107,65 @@ using lingodb::runtime::Array;
     return VarLen32::fromString(result);
 }
 
-uint32_t Array::metadataSlice(
-    std::vector<uint32_t> &metadata, 
-    std::vector<uint32_t> &lengths, 
+void Array::getArraySlice(
+    std::vector<uint32_t> &widths, 
+    std::vector<uint32_t> &widthSize, 
     std::vector<uint32_t> &elements, 
     uint32_t lowerBound,
     uint32_t upperBound,
     uint32_t sliceDimension, 
     uint32_t dimension,
-    uint32_t offset, 
     const uint32_t *&entry) {
 
-    uint32_t result = 0;
-    bool isSlice = dimension == sliceDimension;
+    auto isSlice = dimension == sliceDimension;
+    auto index = this->indices[dimension-1];
     // Case for last dimension
-    if (dimension == this->numberDimensions) {
-        for (uint32_t i = 0; i < entry[1]; i++) {
-            // If slice then proof if element is outside the interval
+    if (dimension == this->dimensions) {
+        // Get position of first element
+        auto offset = getOffset(entry);
+        for (int32_t i = index; i < index + entry[0]; i++) {
+            // If outside the interval, ignore value
             if (isSlice && (i < lowerBound || i > upperBound)) {
+                offset++;
                 continue;
             }
-            result++;
-            elements.push_back(i + entry[0]);
+            // Otherwise add its index
+            elements.push_back(offset);
+            offset++;
         }
-        return result;
+        return;
     }
 
     // Case for other dimensions
-    auto *subEntry = getChildEntry(entry, dimension);
-    // Identify insert position for the metadata vector
-    auto insertPos = 0;
-    for (size_t i = 0; i < dimension + 1; i++) {
-        if (lengths.size() > i) {
-            insertPos += lengths[i] * 3;
-        }
+    auto *children = getChildWidth(entry, dimension);
+    // Identify insert position for the widths vector
+    auto widthPosition = 0;
+    for (uint32_t i = 0; i <= dimension; i++) {
+        widthPosition += widthSize[i];
     }
-    // Identify insert position for the lengths vector
-    auto lengthPos = lengths.size() < dimension + 1 ? lengths.size() : dimension;
-    uint32_t newOffset = offset;
-    // Iterate over each child metadata entry
-    for (size_t i = 0; i < entry[2] * 3; i+=3) {
-        // If slice then proof if child is outside the interval
-        if (isSlice && (i/3 < lowerBound || i/3 > upperBound)) {
+    // Iterate over each child width entry
+    for (int32_t i = index; i < index + entry[0]; i++) {
+        // If outside the interval, ignore structure
+        if (isSlice && (i < lowerBound || i > upperBound)) {
             continue;
         }
-        // Adjust metadata length of particular dimension
-        *(lengths.begin() + lengthPos) += 1;
-        // Add new metadata entry to corresponding vector for this child (triple)
-        metadata.insert(metadata.begin() + insertPos, newOffset);
-        metadata.insert(metadata.begin() + insertPos+1, 0);
-        metadata.insert(metadata.begin() + insertPos+2, 0);
-
-        auto dimChange = lengths.size() < dimension + 1 ? 0 : lengths[dimension+1];
-        auto *child = subEntry + i;
+        // Otherwise incrementing widht size, because child should remain
+        *(widthSize.begin() + dimension) += 1;
+        // Add new width entry
+        widths.insert(widths.begin() + widthPosition, 0);
+        // Store important information to later update the width of this child
+        uint32_t state = dimension+1 == this->dimensions ? elements.size() : widthSize[dimension+1];
         // Check child entry recursively
-        auto elemLength = metadataSlice(metadata, lengths, elements, lowerBound, upperBound, sliceDimension, dimension + 1, newOffset, child);
-        // Proof if null value must be adopted (not deleted from slice)
-        if (elemLength == 0 && subEntry[i+1] == 1 && dimension >= sliceDimension) {
-            elements.push_back(subEntry[i]);
-            elemLength++;
+        auto *child = children + (i-index);
+        getArraySlice(widths, widthSize, elements, lowerBound, upperBound, sliceDimension, dimension + 1, child);
+        // Calculate the correct width of this child
+        if (dimension+1 == this->dimensions) {
+            // By identifying how many elements have been detected after processing its childs (last dimension)
+            widths[widthPosition] = elements.size() - state;
+        } else {
+            // By identifying how many array structures have been detected after processing its childs (other dimensions)
+            widths[widthPosition] = widthSize[dimension+1] - state;
         }
-        // Adjust elem-Length and dim-Length of new metadata entry
-        metadata[insertPos + 1] = elemLength;
-        metadata[insertPos + 2] = lengths[dimension+1] - dimChange;
-        insertPos += 3;
-        newOffset += elemLength;
-        result += elemLength;
+        widthPosition += 1;
     }
-    return result;
-} */
+}

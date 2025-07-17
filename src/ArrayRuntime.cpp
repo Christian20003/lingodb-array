@@ -50,7 +50,7 @@ lingodb::runtime::VarLen32 ArrayRuntime::append(lingodb::runtime::VarLen32 array
     return arrayObj.append(valueVal);
 }
 
-/* lingodb::runtime::VarLen32 ArrayRuntime::slice(lingodb::runtime::VarLen32 array, int32_t type, int32_t lowerBound, int32_t upperBound, int32_t dimension) {
+lingodb::runtime::VarLen32 ArrayRuntime::slice(lingodb::runtime::VarLen32 array, int32_t type, int32_t lowerBound, int32_t upperBound, int32_t dimension) {
     std::string arrayVal = array.str();
     Array arrayObj(arrayVal, type);
     return arrayObj.slice(lowerBound, upperBound, dimension);
@@ -60,7 +60,7 @@ lingodb::runtime::VarLen32 ArrayRuntime::subscript(lingodb::runtime::VarLen32 ar
     std::string arrayVal = array.str();
     Array arrayObj(arrayVal, type);
     return arrayObj[position];
-} */
+}
 
 lingodb::runtime::VarLen32 ArrayRuntime::add(
     lingodb::runtime::VarLen32 left,
@@ -206,7 +206,7 @@ lingodb::runtime::VarLen32 ArrayRuntime::scalarDiv(lingodb::runtime::VarLen32 ar
     return arrayObj.scalarDiv(value, isleft);
 }
 
-/* lingodb::runtime::VarLen32 ArrayRuntime::fill(int32_t value, lingodb::runtime::VarLen32 array, int32_t type) {
+lingodb::runtime::VarLen32 ArrayRuntime::fill(int32_t value, lingodb::runtime::VarLen32 array, int32_t type) {
     std::string arrayVal = array.str();
     Array arrayObj(arrayVal, type);
     return Array::fill(value, arrayObj);
@@ -243,7 +243,7 @@ lingodb::runtime::VarLen32 ArrayRuntime::fill(lingodb::runtime::VarLen32 array, 
     return Array::fill(arrayObj);
 }
 
-lingodb::runtime::VarLen32 ArrayRuntime::transpose(lingodb::runtime::VarLen32 array, int32_t type) {
+/* lingodb::runtime::VarLen32 ArrayRuntime::transpose(lingodb::runtime::VarLen32 array, int32_t type) {
     std::string arrayVal = array.str();
     Array arrayObj(arrayVal, type);
     return arrayObj.transpose();
