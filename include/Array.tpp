@@ -263,3 +263,79 @@ int32_t Array::getMaxIndex() {
 
     return result;
 }
+
+template<class TYPE>
+void Array::castAndCopyElement(char *&buffer, uint32_t position, uint8_t type) {
+    // Check if position is out of bounds
+    if (position > this->size) {
+        throw std::runtime_error("Requested array element does not exist");
+    }
+    // If current elements are strings, the actual value needs to be constructed
+    if (this->type == ArrayType::STRING) {
+        // The first character of the string
+        uint32_t offset = 0;
+        // The length of the string
+        uint32_t length = 0;
+        auto *lengths = reinterpret_cast<TYPE *>(this->elements);
+        // Find first character and length
+        for (uint32_t i = 0; i <= position; i++) {
+            if (i == position) length = lengths[i];
+            else offset += lengths[i];
+        }
+        // Construct string and try a cast to the provided type
+        std::string value(this->strings + offset, length);
+        switch (type) {
+            case ArrayType::INTEGER32:
+                castAndCopyElement<int32_t>(buffer, value);
+                break;
+            case ArrayType::INTEGER64:
+                castAndCopyElement<int64_t>(buffer, value);
+                break;
+            case ArrayType::FLOAT:
+                castAndCopyElement<float>(buffer, value);
+                break;
+            case ArrayType::DOUBLE:
+                castAndCopyElement<double>(buffer, value);
+                break;
+            case ArrayType::STRING:
+                castAndCopyElement<std::string>(buffer, value);
+                break;
+            default:
+                throw std::runtime_error("Given type is not supported");
+        }
+        return;
+    }
+    // If elements are not strings, get the value and do a simple cast
+    // If the result type is string, cast the value to a string and copy its length
+    auto *elements = reinterpret_cast<TYPE *>(this->elements);
+    auto element = elements[position];
+    switch (type) {
+        case ArrayType::INTEGER32: {
+            auto value = static_cast<int32_t>(element);
+            writeToBuffer(buffer, &value, 1);
+            break;
+        }
+        case ArrayType::INTEGER64: {
+            auto value = static_cast<int64_t>(element);
+            writeToBuffer(buffer, &value, 1);
+            break;
+        }
+        case ArrayType::FLOAT: {
+            auto value = static_cast<float>(element);
+            writeToBuffer(buffer, &value, 1);
+            break;
+        }
+        case ArrayType::DOUBLE: {
+            auto value = static_cast<double>(element);
+            writeToBuffer(buffer, &value, 1);
+            break;
+        }
+        case ArrayType::STRING: {
+            auto value = std::to_string(element);
+            uint32_t length = value.length();
+            writeToBuffer(buffer, &length, 1);
+        }
+        default:
+            throw std::runtime_error("Given type is not supported");
+    }
+}

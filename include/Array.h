@@ -87,6 +87,20 @@ class Array {
     template<class TYPE>
     static void castAndCopyElement(char *&buffer, std::string &value);
 
+    /**
+     * This function casts the array elements at a certain position to the provided type
+     * and copies the result to the buffer.
+     * 
+     * @param buffer A reference to the pointer in which the casted element should be copied.
+     * @param position The position of the element that should be casted.
+     * Possible value range `[1:this->size-1]`.
+     * @param type The result type of the array element.
+     * @throws `std::runtime_error`: If the provided type is not supported in arrays. If the
+     * provided position is out of bounds.
+     */
+    template<class TYPE>
+    void castAndCopyElement(char *&buffer, uint32_t position, uint8_t type);
+
     static uint32_t parseHeader(std::string &array, std::vector<int32_t> &indices, std::vector<int32_t> &lengths);
 
     /**
@@ -309,6 +323,10 @@ class Array {
      * processable format.
      */
     void initArray(char *data);
+
+    VarLen32 castToNumeric(uint8_t type);
+
+    VarLen32 castToString();
 
     // DEBUG-METHODS
     void printData();
@@ -760,6 +778,8 @@ class Array {
      * processable format.
      */
     VarLen32 sigmoid();
+
+    VarLen32 cast(int32_t type);
 
     /**
      * This function transforms the array in a string that can be printed to the console.

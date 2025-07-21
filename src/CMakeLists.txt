@@ -12,6 +12,7 @@ add_library(ArrayBasics
     ArrayActivation.cpp
     ArrayTranspose.cpp
     ArrayFill.cpp
+    ArrayCast.cpp
     ArrayPrint.cpp
     ArrayRuntime.cpp
 )

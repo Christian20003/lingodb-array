@@ -57,6 +57,8 @@ namespace lingodb::runtime {
 
         static int32_t getHighestPosition(VarLen32 array, int32_t type);
 
+        static VarLen32 cast(VarLen32 array, int32_t srcType, int32_t dstType);
+
     };
 
 }
