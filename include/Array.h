@@ -755,6 +755,8 @@ class Array {
      * will be swapped which leads to a rearrangement of the elements. 
      * @note An array with a single dimension will be transformed into an array with 
      * two dimensions. For all other cases, the number of dimensions remains the same.
+     * @throws `std::runtime_error`: If the element type is not numeric. If the provided array 
+     * is not symmetric or contains empty array structures.
      * @return The transposed array as string in array processable format.
      */
     VarLen32 transpose();

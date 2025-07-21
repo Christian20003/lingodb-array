@@ -243,11 +243,11 @@ lingodb::runtime::VarLen32 ArrayRuntime::fill(lingodb::runtime::VarLen32 array, 
     return Array::fill(arrayObj);
 }
 
-/* lingodb::runtime::VarLen32 ArrayRuntime::transpose(lingodb::runtime::VarLen32 array, int32_t type) {
+lingodb::runtime::VarLen32 ArrayRuntime::transpose(lingodb::runtime::VarLen32 array, int32_t type) {
     std::string arrayVal = array.str();
     Array arrayObj(arrayVal, type);
     return arrayObj.transpose();
-} */
+}
 
 lingodb::runtime::VarLen32 ArrayRuntime::sigmoid(lingodb::runtime::VarLen32 array, int32_t type) {
     std::string arrayVal = array.str();
@@ -267,11 +267,11 @@ lingodb::runtime::VarLen32 ArrayRuntime::matrixMul(
         return leftArray.matrixMul(rightArray);
 }
 
-/* int32_t ArrayRuntime::getHighestPosition(lingodb::runtime::VarLen32 array, int32_t type) {
+int32_t ArrayRuntime::getHighestPosition(lingodb::runtime::VarLen32 array, int32_t type) {
     std::string arrayVal = array.str();
     Array arrayObj(arrayVal, type);
     return arrayObj.getHighestPosition();
-} */
+}
 
 lingodb::runtime::VarLen32 ArrayRuntime::cast(lingodb::runtime::VarLen32 array, int32_t srcType, int32_t dstType) {
     std::string arrayVal = array.str();

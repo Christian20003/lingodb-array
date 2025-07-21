@@ -38,7 +38,7 @@ Array::Array(std::string &array) {
     this->type = *data;
     data += 1;
     initArray(data);
-    if (type == ArrayType::INTEGER32) {
+    if (type == ArrayType::INTEGER32 || type == ArrayType::FLOAT) {
         printData();
     }
 }

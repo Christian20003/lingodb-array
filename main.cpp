@@ -24,9 +24,9 @@ int main() {
     VarLen32 var4 = VarLen32::fromString(string4);
     // var4 = ArrayRuntime::fromString(var4, mlir::Type::STRING);
 
-    std::string string5 = "{{0.123,0.6786},{7.2,5.2}}";
+    std::string string5 = "{{3,4},{5,6},{7,8}}";
     VarLen32 var5 = VarLen32::fromString(string5);
-    var5 = ArrayRuntime::fromString(var5, 3);
+    var5 = ArrayRuntime::fromString(var5, 0);
 
     std::string string6 = "[6:700][4:9]={{2.5,8.2},{5.2,8.2}}";
     VarLen32 var6 = VarLen32::fromString(string6);
@@ -45,13 +45,14 @@ int main() {
     // VarLen32 op = ArrayRuntime::fill(var3, 0);
     // VarLen32 op = ArrayRuntime::sigmoid(var5, 3);
     // VarLen32 op = ArrayRuntime::matrixMul(var6, var5, 3, 3);
-    VarLen32 op = ArrayRuntime::cast(var2, 5, 0);
+    // VarLen32 op = ArrayRuntime::cast(var2, 5, 0);
     // op = ArrayRuntime::cast(op, 5, 3);
+    VarLen32 op = ArrayRuntime::transpose(var5, 0);
     std::string array = op.str();
-    // int pos = ArrayRuntime::getHighestPosition(var2, mlir::Type::STRING);
+    int pos = ArrayRuntime::getHighestPosition(var1, 0);
     //std::cout << array << std::endl;
     Array result(array);
     std::cout << result.print() << std::endl;
-    // std::cout << pos << std::endl;
+    std::cout << pos << std::endl;
     return 0;
 }
