@@ -68,7 +68,7 @@ int32_t Array::getHighestPosition() {
     case ArrayType::STRING:
         return getMaxIndex<uint32_t>();
     default:
-        throw std::runtime_error("Array-HighestPosition: Given type is not supported in arrays");
+        throw std::runtime_error("Array-HighestPosition: Given array type is not supported in arrays");
     }
 }
 
@@ -91,7 +91,7 @@ void Array::copyElements(char *&buffer) {
         writeToBuffer(buffer, reinterpret_cast<uint32_t*>(this->elements), this->size);
         break;
     default:
-        throw std::runtime_error("Given type is not supported in arrays");
+        throw std::runtime_error("Copy-Operation: Given array type is not supported in arrays");
     }
 }
 
@@ -131,7 +131,7 @@ void Array::copyElement(char *&buffer, uint32_t position) {
         break;
     }
     default:
-        throw std::runtime_error("Given type is not supported in arrays");
+        throw std::runtime_error("Copy-Operation: Given array type is not supported in arrays");
     }
 }
 

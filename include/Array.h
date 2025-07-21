@@ -324,8 +324,21 @@ class Array {
      */
     void initArray(char *data);
 
+    /**
+     * This method cast each element of the array into the specified type.
+     * 
+     * @param type The type in which each element should casted.
+     * @throws `std::runtime_error`: If the provided type is not numeric. If the
+     * array element could not be casted to the provided type.
+     * @return The resulting array as string in array processable format.
+     */
     VarLen32 castToNumeric(uint8_t type);
 
+    /**
+     * This method cast each element of the array into strings.
+     * 
+     * @return The resulting array as string in array processable format.
+     */
     VarLen32 castToString();
 
     // DEBUG-METHODS
@@ -393,7 +406,7 @@ class Array {
      * This method copies the array element on the given position into the provided buffer.
      * 
      * @param buffer A reference to the string buffer where the content needs to be stored.
-     * @param position  The position of the element. Possible value range `[0:numberElements-1]`. 
+     * @param position  The position of the element. Possible value range `[0:size-1]`. 
      * Position values should not include NULL values.
      * @throws `std::runtime_error`: If the position is out of range.
      */
@@ -410,7 +423,7 @@ class Array {
      * This method copies the string on the given position into the provided buffer.
      * 
      * @param buffer A reference to the string buffer where the content needs to be stored.
-     * @param position The position of the element. Possible value range `[0:numberElements-1]`. 
+     * @param position The position of the element. Possible value range `[0:size-1]`. 
      * Position values should not include NULL values.
      * @throws `std::runtime_error`: If the position is out of range.
      */
@@ -440,7 +453,7 @@ class Array {
      * This function counts the number of NULL values up to the specified position.
      * 
      * @param position The limit up to which position should be counted.
-     * Possible value range `[0:numberElements + nulls - 1]`.
+     * Possible value range `[0:size + nulls - 1]`.
      * @throws `std::runtime_error`: If the selected position is out of range.
      * @return The number of NULL values.
      */
@@ -473,7 +486,7 @@ class Array {
      * This method returns the number of width entris of a specific
      * dimension.
      * 
-     * @param dimension The selected dimension. Possible value range `[1:numberDimensions]`.
+     * @param dimension The selected dimension. Possible value range `[1:dimensions]`.
      * @throws `std::runtime_error`: If the selected dimension is out of range.
      */
     uint32_t getWidthSize(uint32_t dimension);
@@ -488,7 +501,7 @@ class Array {
      * This method returns the string length of a particular element.
      * 
      * @param position The position of the element. Possible value range
-     * `[0:numberElements-1]`. Position values should not include NULL values.
+     * `[0:size-1]`. Position values should not include NULL values.
      * @throws `std::runtime_error`: If the selected position is out of range.
      * @return A string length if the array stores strings, otherwise `0`.
      */
@@ -522,7 +535,7 @@ class Array {
      * This method returns a pointer to the first width entry that
      * belongs to the provided dimension.
      * 
-     * @param dimension The selected dimension. Possible value range `[1:numberDimensions]`.
+     * @param dimension The selected dimension. Possible value range `[1:dimensions]`.
      * @throws `std::runtime_error`: If the selected dimension is out of range.
      */
     const uint32_t* getFirstWidth(uint32_t dimension);
@@ -533,7 +546,7 @@ class Array {
      * 
      * @param width A pointer to the width entry.
      * @param dimension The dimension of the given width entry. 
-     * Possible value range `[1:numberDimensions]`.
+     * Possible value range `[1:dimensions]`.
      * @throws `std::runtime_error`: If the selected dimension is out of range.
      * @return A pointer to the first child width entry. If not any child 
      * could be found it will return a `nullptr`.
@@ -581,16 +594,20 @@ class Array {
     /**
      * This method proofs if the element type is numeric.
      * 
+     * @param type The type that should be checked.
+     * 
      * @return `True` if the element type is numeric, otherwise `False`.
      */
-    bool isNumericType();
+    static bool isNumericType(uint8_t type);
 
     /**
      * This method proofs if the element type is a floating point type.
      * 
+     * @param type The type that should be checked.
+     * 
      * @return `True` if the element type is a floating point type, otherwise `False`.
      */
-    bool isFloatingPointType();
+    static bool isFloatingPointType(uint8_t type);
 
     /**
      * This function appends a structure or value of type `TYPE` to the array. Thereby the content
@@ -779,6 +796,13 @@ class Array {
      */
     VarLen32 sigmoid();
 
+    /**
+     * This function casts the provided array into an new array with another type.
+     * 
+     * @param type The result type of each array element.
+     * @throws `std::runtime_error`: If the provided type is not supported. If the array
+     * elements could not be casted to the provided type.
+     */
     VarLen32 cast(int32_t type);
 
     /**

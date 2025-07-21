@@ -107,11 +107,11 @@ uint8_t Array::getTypeId(int32_t type) {
     case ArrayType::STRING:
         return ArrayType::STRING;
     default:
-        throw std::runtime_error("Given type is not supported with arrays");
+        throw std::runtime_error("Type-Cast-Operation: Given array type is not supported with arrays");
     }
 }
 
-bool Array::isNumericType() {
+bool Array::isNumericType(uint8_t type) {
     switch (type) 
     {
     case ArrayType::INTEGER32:
@@ -124,7 +124,7 @@ bool Array::isNumericType() {
     return false;
 }
 
-bool Array::isFloatingPointType() {
+bool Array::isFloatingPointType(uint8_t type) {
     switch (type) 
     {
     case ArrayType::FLOAT:
@@ -158,7 +158,7 @@ size_t Array::getTypeSize(uint8_t type) {
     case ArrayType::STRING:
         return sizeof(uint32_t);
     default:
-        throw std::runtime_error("Given type is not supported in arrays");
+        throw std::runtime_error("Type-Size-Operation: Given array type is not supported in arrays");
     }
 }
 

@@ -9,6 +9,11 @@ lingodb::runtime::VarLen32 Array::cast(int32_t type) {
 }
 
 lingodb::runtime::VarLen32 Array::castToNumeric(uint8_t type) {
+    // Check if type is numeric
+    if (!isNumericType(type)) {
+        throw std::runtime_error("Array-Cast: Provided type is not numeric");
+    }
+    // Create result string and copy each metadata to it (keeps the same)
     auto totalElements = getSize(true);
     std::string result;
     auto size = getStringSize(this->dimensions, this->size, getWidthSize(), getNullBytes(totalElements), 0, type);
@@ -23,6 +28,7 @@ lingodb::runtime::VarLen32 Array::castToNumeric(uint8_t type) {
     writeToBuffer(buffer, this->dimensionWidthMap, this->dimensions);
     writeToBuffer(buffer, this->widths, getWidthSize());
 
+    // Iterate over each element and cast it to the provided type
     for (uint32_t i = 0; i < this->size; i++) {
         switch (this->type) {
             case ArrayType::INTEGER32:
@@ -41,7 +47,7 @@ lingodb::runtime::VarLen32 Array::castToNumeric(uint8_t type) {
                 castAndCopyElement<uint32_t>(buffer, i, type);
                 break;
             default:
-                throw std::runtime_error("Given array type is not supported");
+                throw std::runtime_error("Numeric-Cast-Operation: Given array type is not supported");
         }
     }
     copyNulls(buffer, this->nulls, totalElements, 0);
@@ -51,8 +57,8 @@ lingodb::runtime::VarLen32 Array::castToNumeric(uint8_t type) {
 lingodb::runtime::VarLen32 Array::castToString() {
     auto totalElements = getSize(true);
     std::vector<std::string> elements;
-    //elements.reserve(this->size);
 
+    // Iterate over each element and cast it to a string
     uint32_t offset = 0;
     for (uint32_t i = 0; i < this->size; i++) {
         switch (this->type) {
@@ -83,15 +89,17 @@ lingodb::runtime::VarLen32 Array::castToString() {
                 break;
             }
             default:
-                throw std::runtime_error("Given array type is not supported");
+                throw std::runtime_error("String-Cast-Operation: Given array type is not supported");
         }
     }
 
+    // Calculate total string length
     uint32_t lengths = 0;
     for (auto &entry : elements) {
         lengths += entry.length();
     }
 
+    // Create result string and copy each metadata to it (keeps the same)
     std::string result;
     uint8_t type = ArrayType::STRING;
     auto size = getStringSize(this->dimensions, this->size, getWidthSize(), getNullBytes(totalElements), lengths, type);

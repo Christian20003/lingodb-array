@@ -3,7 +3,7 @@
 using lingodb::runtime::Array;
 
 lingodb::runtime::VarLen32 Array::operator+(Array &other) {
-    if (!isNumericType()) {
+    if (!isNumericType(this->type)) {
         throw std::runtime_error("Array-Add: Given element type is not numeric");
     }
     if (type != other.getType()) {
@@ -40,7 +40,7 @@ lingodb::runtime::VarLen32 Array::operator+(Array &other) {
 }
 
 lingodb::runtime::VarLen32 Array::operator-(Array &other) {
-    if (!isNumericType()) {
+    if (!isNumericType(this->type)) {
         throw std::runtime_error("Array-Sub: Given element type is not numeric");
     }
     if (type != other.getType()) {
@@ -77,7 +77,7 @@ lingodb::runtime::VarLen32 Array::operator-(Array &other) {
 }
 
 lingodb::runtime::VarLen32 Array::operator*(Array &other) {
-    if (!isNumericType()) {
+    if (!isNumericType(this->type)) {
         throw std::runtime_error("Array-Mul: Given element type is not numeric");
     }
     if (type != other.getType()) {
@@ -114,7 +114,7 @@ lingodb::runtime::VarLen32 Array::operator*(Array &other) {
 }
 
 lingodb::runtime::VarLen32 Array::operator/(Array &other) {
-    if (!isNumericType()) {
+    if (!isNumericType(this->type)) {
         throw std::runtime_error("Array-Div: Given element type is not numeric");
     }
     if (type != other.getType()) {
@@ -279,7 +279,7 @@ lingodb::runtime::VarLen32 Array::scalarDiv(double value, bool isLeft) {
 }
 
 lingodb::runtime::VarLen32 Array::matrixMul(Array &other) {
-    if (!isFloatingPointType()) {
+    if (!isFloatingPointType(this->type)) {
         throw std::runtime_error("Array-MatrixMul: Given element type must be a floating point type");
     }
     if (this->type != other.getType()) {

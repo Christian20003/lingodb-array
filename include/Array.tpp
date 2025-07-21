@@ -301,7 +301,7 @@ void Array::castAndCopyElement(char *&buffer, uint32_t position, uint8_t type) {
                 castAndCopyElement<std::string>(buffer, value);
                 break;
             default:
-                throw std::runtime_error("Given type is not supported");
+                throw std::runtime_error("Cast-Operation: Given array type is not supported");
         }
         return;
     }
@@ -336,6 +336,6 @@ void Array::castAndCopyElement(char *&buffer, uint32_t position, uint8_t type) {
             writeToBuffer(buffer, &length, 1);
         }
         default:
-            throw std::runtime_error("Given type is not supported");
+            throw std::runtime_error("Cast-Operation: Given array type is not supported");
     }
 }

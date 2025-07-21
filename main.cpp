@@ -45,8 +45,8 @@ int main() {
     // VarLen32 op = ArrayRuntime::fill(var3, 0);
     // VarLen32 op = ArrayRuntime::sigmoid(var5, 3);
     // VarLen32 op = ArrayRuntime::matrixMul(var6, var5, 3, 3);
-    VarLen32 op = ArrayRuntime::cast(var1, 0, 5);
-    op = ArrayRuntime::cast(op, 5, 3);
+    VarLen32 op = ArrayRuntime::cast(var2, 5, 0);
+    // op = ArrayRuntime::cast(op, 5, 3);
     std::string array = op.str();
     // int pos = ArrayRuntime::getHighestPosition(var2, mlir::Type::STRING);
     //std::cout << array << std::endl;

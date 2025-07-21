@@ -39,7 +39,7 @@ void Array::printArray(std::string &target, const uint32_t *width, uint32_t dime
                     toString<std::string>(getElementPosition(i), target);
                     break;
                 default:
-                    throw std::runtime_error("Given type is not supported");
+                    throw std::runtime_error("Print-Operation: Given array type is not supported");
                 }
             }
             // If not last element, add a comma
