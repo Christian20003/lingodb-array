@@ -130,8 +130,8 @@ lingodb::runtime::VarLen32 Array::generate(TYPE *value, Array &structure, uint8_
     const ARRAYTYPE *elements = reinterpret_cast<const ARRAYTYPE*>(structure.getElements());
     auto size = structure.getSize();
 
-    // Get information about how many time the values must copied and
-    // How many metadata entries are required in total and in each dimension 
+    // Get information about how many times the value must copied and
+    // how many width entries are required in total and in each dimension 
     uint32_t elementCopies = 1;
     uint32_t widthSize = 1;
     std::vector<uint32_t> dimensionWidthMap{1};
@@ -154,33 +154,34 @@ lingodb::runtime::VarLen32 Array::generate(TYPE *value, Array &structure, uint8_
     writeToBuffer(buffer, &type, 1);
     writeToBuffer(buffer, &size, 1);
     writeToBuffer(buffer, &elementCopies, 1);
+    // Create new index values
     for (uint32_t i = 0; i < size; i++) {
-        uint32_t value = 1;
-        writeToBuffer(buffer, &value, 1);
+        uint32_t index = 1;
+        writeToBuffer(buffer, &index, 1);
     }
     writeToBuffer(buffer, dimensionWidthMap.data(), dimensionWidthMap.size());
     // Iterate over each element of the structure array
-    for (size_t i = 0; i < size; i++) {
-        uint32_t width = static_cast<uint32_t>(elements[i]);
-        uint32_t length = dimensionWidthMap[i];
-        // Iterate over each metadata entry that is required for the result array
-        for (size_t j = 0; j < length; j++) {
+    for (uint32_t i = 0; i < size; i++) {
+        auto width = static_cast<uint32_t>(elements[i]);
+        auto length = dimensionWidthMap[i];
+        // Iterate over each width entry that is required for the result array
+        for (uint32_t j = 0; j < length; j++) {
             writeToBuffer(buffer, &width, 1);
         }
     }
     // Check if array element type is string
     if (!std::is_same<TYPE, char>::value){
         // If false, copy only n times the value
-        for (size_t i = 0; i < elementCopies; i++) {
+        for (uint32_t i = 0; i < elementCopies; i++) {
             writeToBuffer(buffer, value, 1);
         }
     } else {
         // If true, copy n times string length and n times the string itself
-        for (size_t i = 0; i < elementCopies; i++) {
+        for (uint32_t i = 0; i < elementCopies; i++) {
             writeToBuffer(buffer, &stringSize, 1);
         }
         buffer += getNullBytes(elementCopies);
-        for (size_t i = 0; i < elementCopies; i++) {
+        for (uint32_t i = 0; i < elementCopies; i++) {
             writeToBuffer(buffer, value, stringSize);
         }
     }
@@ -193,8 +194,8 @@ lingodb::runtime::VarLen32 Array::generate(Array &structure, uint8_t type) {
     const ARRAYTYPE *elements = reinterpret_cast<const ARRAYTYPE*>(structure.getElements());
     auto size = structure.getSize();
 
-    // Get information about how many time the values must copied and
-    // How many metadata entries are required in total and in each dimension 
+    // Get information about how many times the value must copied and
+    // how many width entries are required in total and in each dimension 
     uint32_t elementCopies = 1;
     uint32_t widthSize = 1;
     std::vector<uint32_t> dimensionWidthMap{1};
@@ -218,23 +219,24 @@ lingodb::runtime::VarLen32 Array::generate(Array &structure, uint8_t type) {
     writeToBuffer(buffer, &type, 1);
     writeToBuffer(buffer, &size, 1);
     writeToBuffer(buffer, &zero, 1);
+    // Create new index values
     for (uint32_t i = 0; i < size; i++) {
-        uint32_t value = 1;
-        writeToBuffer(buffer, &value, 1);
+        uint32_t index = 1;
+        writeToBuffer(buffer, &index, 1);
     }
     writeToBuffer(buffer, dimensionWidthMap.data(), dimensionWidthMap.size());
     uint32_t elementLength = elementCopies;
     // Iterate over each element of the structure array
-    for (size_t i = 0; i < size; i++) {
-        uint32_t width = static_cast<uint32_t>(elements[i]);
-        uint32_t length = dimensionWidthMap[i];
-        // Iterate over each metadata entry that is required for the result array
-        for (size_t j = 0; j < length; j++) {
+    for (uint32_t i = 0; i < size; i++) {
+        auto width = static_cast<uint32_t>(elements[i]);
+        auto length = dimensionWidthMap[i];
+        // Iterate over each width entry that is required for the result array
+        for (uint32_t j = 0; j < length; j++) {
             writeToBuffer(buffer, &width, 1);
         }
     }
     // Write null bits
-    for (size_t i = 0; i < elementCopies; i++) {
+    for (uint32_t i = 0; i < elementCopies; i++) {
         // Check if new null byte must be selected
         if (i != 0 && i % 8 == 0) {
             buffer++;

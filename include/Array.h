@@ -101,6 +101,16 @@ class Array {
     template<class TYPE>
     void castAndCopyElement(char *&buffer, uint32_t position, uint8_t type);
 
+    /**
+     * This function parses the given header in a string.
+     * 
+     * @param array A reference to the specified array as string.
+     * @param indices A reference to a vector which should store the start indices.
+     * @param lengths A reference to a vector which should store the total length of each dimension.
+     * @throws `std::runtime_error`: If the header is a invalid specification. If the header has 
+     * incorrect syntax. If the header value could not be casted to a 32-bit integer.
+     * @return The number of characters which corresponds to the header.
+     */
     static uint32_t parseHeader(std::string &array, std::vector<int32_t> &indices, std::vector<int32_t> &lengths);
 
     /**
@@ -304,6 +314,12 @@ class Array {
      */
     void printArray(std::string &target, const uint32_t *width, uint32_t dimension);
 
+    /**
+     * This method prints the stored header to the target string, if at least a single
+     * stored index is not the default value (1).
+     * 
+     * @param target A reference to the target string to which the header should be appended. 
+     */
     void printHeader(std::string &target);
 
     /**
@@ -651,7 +667,7 @@ class Array {
      * @param other A reference to the array whose values are to be used for the addition.
      * @throws `std::runtime_error`: If the array type is not numeric. If both arrays have
      * different types. If one array has NULL values or empty array structures. If both
-     * arrays have unequal array structures (unequal metadata).
+     * arrays have unequal array structures (unequal widths).
      * @return The result array as string in array processable format.
      */
     VarLen32 operator+(Array &other);
@@ -662,7 +678,7 @@ class Array {
      * @param other A reference to the array whose values are to be used for the subtraction.
      * @throws `std::runtime_error`: If the array type is not numeric. If both arrays have
      * different types. If one array has NULL values or empty array structures. If both
-     * arrays have unequal array structures (unequal metadata).
+     * arrays have unequal array structures (unequal widths).
      * @return The result array as string in array processable format.
      */
     VarLen32 operator-(Array &other);
@@ -673,7 +689,7 @@ class Array {
      * @param other A reference to the array whose values are to be used for the multiplication.
      * @throws `std::runtime_error`: If the array type is not numeric. If both arrays have
      * different types. If one array has NULL values or empty array structures. If both
-     * arrays have unequal array structures (unequal metadata).
+     * arrays have unequal array structures (unequal widths).
      * @return The result array as string in array processable format.
      */
     VarLen32 operator*(Array &other);
@@ -684,7 +700,7 @@ class Array {
      * @param other A reference to the array whose values are to be used for the division.
      * @throws `std::runtime_error`: If the array type is not numeric. If both arrays have
      * different types. If one array has NULL values or empty array structures. If both
-     * arrays have unequal array structures (unequal metadata).
+     * arrays have unequal array structures (unequal widths).
      * @return The result array as string in array processable format.
      */
     VarLen32 operator/(Array &other); 
