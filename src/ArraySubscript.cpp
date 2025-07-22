@@ -36,13 +36,13 @@ lingodb::runtime::VarLen32 Array::operator[](uint32_t position) {
         }
         // Return element as string (return type must be fixed)
         auto position = getElementPosition(elementIdx[0]);
-        if (type == mlir::Type::INTEGER) {
+        if (type == ArrayType::INTEGER32) {
             toString<int32_t>(position, result);
-        } else if (type == mlir::Type::BIGINTEGER) {
+        } else if (type == ArrayType::INTEGER64) {
             toString<int64_t>(position, result);
-        } else if (type == mlir::Type::FLOAT) {
+        } else if (type == ArrayType::FLOAT) {
             toString<float>(position, result);
-        } else if (type == mlir::Type::DOUBLE) {
+        } else if (type == ArrayType::DOUBLE) {
             toString<double>(position, result);
         } else {
             toString<std::string>(position, result);

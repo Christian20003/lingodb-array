@@ -159,9 +159,9 @@ void Array::castAndCopyElement<int32_t>(char *&buffer, std::string &value) {
     try {
         int32_t castValue = std::stoi(value);
         writeToBuffer(buffer, &castValue, 1);
-    } catch (std::invalid_argument exc) {
+    } catch (std::invalid_argument &exc) {
         throw std::runtime_error(value + " is not of type INTEGER");
-    } catch (std::out_of_range exc) {
+    } catch (std::out_of_range &exc) {
         throw std::runtime_error(value + " is out of range of 32-Bit INTEGER");
     }
 }
@@ -171,9 +171,9 @@ void Array::castAndCopyElement<int64_t>(char *&buffer, std::string &value) {
     try {
         int64_t castValue = std::stol(value);
         writeToBuffer(buffer, &castValue, 1);
-    } catch (std::invalid_argument exc) {
+    } catch (std::invalid_argument &exc) {
         throw std::runtime_error(value + " is not of type INTEGER");
-    } catch (std::out_of_range exc) {
+    } catch (std::out_of_range &exc) {
         throw std::runtime_error(value + " is out of range of 64-Bit INTEGER");
     }
 }
@@ -183,9 +183,9 @@ void Array::castAndCopyElement<float>(char *&buffer, std::string &value) {
     try {
         float castValue = std::stof(value);
         writeToBuffer(buffer, &castValue, 1);
-    } catch (std::invalid_argument exc) {
+    } catch (std::invalid_argument &exc) {
         throw std::runtime_error(value + " is not of type FLOAT");
-    } catch (std::out_of_range exc) {
+    } catch (std::out_of_range &exc) {
         throw std::runtime_error(value + " is out of range of FLOAT");
     }
 }
@@ -195,9 +195,9 @@ void Array::castAndCopyElement<double>(char *&buffer, std::string &value) {
     try {
         double castValue = std::stod(value);
         writeToBuffer(buffer, &castValue, 1);
-    } catch (std::invalid_argument exc) {
+    } catch (std::invalid_argument &exc) {
         throw std::runtime_error(value + " is not of type DOUBLE");
-    } catch (std::out_of_range exc) {
+    } catch (std::out_of_range &exc) {
         throw std::runtime_error(value + " is out of range of DOUBLE");
     }
 }

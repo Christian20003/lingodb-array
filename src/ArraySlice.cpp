@@ -2,7 +2,7 @@
 
 using lingodb::runtime::Array;
 
-lingodb::runtime::VarLen32 Array::slice(uint32_t lowerBound, uint32_t upperBound, uint32_t dimension) {
+lingodb::runtime::VarLen32 Array::slice(int32_t lowerBound, int32_t upperBound, uint32_t dimension) {
     // lower bound must be smaller than upper bound
     if (lowerBound > upperBound) {
         throw std::runtime_error("Array-Slice: Given lower-bound is larger than given upper-bound");
@@ -111,8 +111,8 @@ void Array::getArraySlice(
     std::vector<uint32_t> &widths, 
     std::vector<uint32_t> &widthSize, 
     std::vector<uint32_t> &elements, 
-    uint32_t lowerBound,
-    uint32_t upperBound,
+    int32_t lowerBound,
+    int32_t upperBound,
     uint32_t sliceDimension, 
     uint32_t dimension,
     const uint32_t *&entry) {
@@ -123,7 +123,7 @@ void Array::getArraySlice(
     if (dimension == this->dimensions) {
         // Get position of first element
         auto offset = getOffset(entry);
-        for (int32_t i = index; i < index + entry[0]; i++) {
+        for (int32_t i = index; i < index + (int32_t) entry[0]; i++) {
             // If outside the interval, ignore value
             if (isSlice && (i < lowerBound || i > upperBound)) {
                 offset++;
@@ -144,7 +144,7 @@ void Array::getArraySlice(
         widthPosition += widthSize[i];
     }
     // Iterate over each child width entry
-    for (int32_t i = index; i < index + entry[0]; i++) {
+    for (int32_t i = index; i < index + (int32_t) entry[0]; i++) {
         // If outside the interval, ignore structure
         if (isSlice && (i < lowerBound || i > upperBound)) {
             continue;

@@ -7,7 +7,7 @@ lingodb::runtime::VarLen32 Array::fromString(std::string &source, int32_t type) 
     uint8_t typeId = getTypeId(type);
     uint32_t dimensions = 0;
     std::vector<int32_t> indices;
-    std::vector<int32_t> lengths;
+    std::vector<uint32_t> lengths;
     // How many characters should be ignored (possible header)
     auto start = parseHeader(source, indices, lengths);
     // If header exists, dimensions can be derived
@@ -231,7 +231,7 @@ lingodb::runtime::VarLen32 Array::fromString(std::string &source, int32_t type) 
     return VarLen32::fromString(result);
 }
 
-uint32_t Array::parseHeader(std::string &array, std::vector<int32_t> &indices, std::vector<int32_t> &lengths) {
+uint32_t Array::parseHeader(std::string &array, std::vector<int32_t> &indices, std::vector<uint32_t> &lengths) {
     auto symbol = array.begin();
     bool foundHeader = false;
     try {
@@ -295,7 +295,7 @@ uint32_t Array::parseHeader(std::string &array, std::vector<int32_t> &indices, s
                     }
             }
         }
-    } catch (std::out_of_range exc) {
+    } catch (std::out_of_range &exc) {
         throw std::runtime_error("Array-Cast: Specified index is out of range for a 32-bit integer");
     }
     if (*symbol == '=') {

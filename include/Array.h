@@ -111,7 +111,7 @@ class Array {
      * incorrect syntax. If the header value could not be casted to a 32-bit integer.
      * @return The number of characters which corresponds to the header.
      */
-    static uint32_t parseHeader(std::string &array, std::vector<int32_t> &indices, std::vector<int32_t> &lengths);
+    static uint32_t parseHeader(std::string &array, std::vector<int32_t> &indices, std::vector<uint32_t> &lengths);
 
     /**
      * This function calculates the necessary size of a string to store all data of the array.
@@ -165,9 +165,7 @@ class Array {
      * @param elements A reference to a vector that stores the position of each element 
      * that should remain (including NULL values).
      * @param lowerBound The index of the first element that should remain.
-     * Possible value range `[1:]`.
      * @param upperBound The index of the last element that should remain.
-     * Possible value range `[1:]`.
      * @param sliceDimension The dimension in which the slice operation should happen.
      * @param dimension The current dimension.
      * @param entry A pointer to the width element that is processed.
@@ -176,8 +174,8 @@ class Array {
         std::vector<uint32_t> &widths, 
         std::vector<uint32_t> &widthSize, 
         std::vector<uint32_t> &elements, 
-        uint32_t lowerBound, 
-        uint32_t upperBound, 
+        int32_t lowerBound, 
+        int32_t upperBound, 
         uint32_t sliceDimension, 
         uint32_t dimension,
         const uint32_t *&entry);
@@ -649,7 +647,7 @@ class Array {
      * If the given lowerBound and upperBound are out of range, this method will return an empty 
      * array.
      */
-    VarLen32 slice(uint32_t lowerBound, uint32_t upperBound, uint32_t dimension);
+    VarLen32 slice(int32_t lowerBound, int32_t upperBound, uint32_t dimension);
 
     /**
      * This method executes the subscript operator to get an element of this array.

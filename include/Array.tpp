@@ -225,7 +225,6 @@ lingodb::runtime::VarLen32 Array::generate(Array &structure, uint8_t type) {
         writeToBuffer(buffer, &index, 1);
     }
     writeToBuffer(buffer, dimensionWidthMap.data(), dimensionWidthMap.size());
-    uint32_t elementLength = elementCopies;
     // Iterate over each element of the structure array
     for (uint32_t i = 0; i < size; i++) {
         auto width = static_cast<uint32_t>(elements[i]);
@@ -336,6 +335,7 @@ void Array::castAndCopyElement(char *&buffer, uint32_t position, uint8_t type) {
             auto value = std::to_string(element);
             uint32_t length = value.length();
             writeToBuffer(buffer, &length, 1);
+            break;
         }
         default:
             throw std::runtime_error("Cast-Operation: Given array type is not supported");

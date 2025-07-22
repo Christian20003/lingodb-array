@@ -36,9 +36,9 @@ lingodb::runtime::VarLen32 Array::fill(float &value, Array &structure) {
         throw std::runtime_error("Array-Fill: Array argument should contain elements");
     }
     if (structure.getType() == ArrayType::INTEGER32) {
-        return generate<float, int32_t>(&value, structure, mlir::Type::FLOAT);
+        return generate<float, int32_t>(&value, structure, ArrayType::FLOAT);
     } else if (structure.getType() == ArrayType::INTEGER64) {
-        return generate<float, int64_t>(&value, structure, mlir::Type::FLOAT);
+        return generate<float, int64_t>(&value, structure, ArrayType::FLOAT);
     } else {
         throw std::runtime_error("Array-Fill: Function supports only integer arrays");
     }
@@ -50,9 +50,9 @@ lingodb::runtime::VarLen32 Array::fill(double &value, Array &structure) {
         throw std::runtime_error("Array-Fill: Array argument should contain elements");
     }
     if (structure.getType() == ArrayType::INTEGER32) {
-        return generate<double, int32_t>(&value, structure, mlir::Type::DOUBLE);
+        return generate<double, int32_t>(&value, structure, ArrayType::DOUBLE);
     } else if (structure.getType() == ArrayType::INTEGER64) {
-        return generate<double, int64_t>(&value, structure, mlir::Type::DOUBLE);
+        return generate<double, int64_t>(&value, structure, ArrayType::DOUBLE);
     } else {
         throw std::runtime_error("Array-Fill: Function supports only integer arrays");
     }
@@ -64,9 +64,9 @@ lingodb::runtime::VarLen32 Array::fill(std::string &value, Array &structure) {
         throw std::runtime_error("Array-Fill: Array argument should contain elements");
     }
     if (structure.getType() == ArrayType::INTEGER32) {
-        return generate<char, int32_t>(value.data(), structure, mlir::Type::STRING, value.size());
+        return generate<char, int32_t>(value.data(), structure, ArrayType::STRING, value.size());
     } else if (structure.getType() == ArrayType::INTEGER64) {
-        return generate<char, int64_t>(value.data(), structure, mlir::Type::STRING, value.size());
+        return generate<char, int64_t>(value.data(), structure, ArrayType::STRING, value.size());
     } else {
         throw std::runtime_error("Array-Fill: Function supports only integer arrays");
     }

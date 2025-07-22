@@ -2,7 +2,7 @@ add_library(ArrayBasics
     VarLen32.cpp
     Array.cpp
     ArrayElementHandling.cpp
-    ArrayMetadataHandling.cpp
+    ArrayWidthHandling.cpp
     ArrayNullHandling.cpp
     ArrayParsing.cpp
     ArrayAppend.cpp

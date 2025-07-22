@@ -71,7 +71,7 @@ void Array::printHeader(std::string &target) {
         // Iterate over each index and add lower and upper bound to result string
         for (uint32_t i = 0; i < this->dimensions; i++) {
             auto length = getDimensionSize(i+1);
-            auto expr = "[" + std::to_string(this->indices[i]) + ":" + std::to_string(this->indices[i] + length - 1) + "]";
+            auto expr = "[" + std::to_string(this->indices[i]) + ":" + std::to_string(this->indices[i] + (int32_t) length - 1) + "]";
             target.append(expr);
         }
         target.append("=");
