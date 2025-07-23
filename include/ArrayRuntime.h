@@ -12,6 +12,7 @@ namespace lingodb::runtime {
         static VarLen32 append(VarLen32 array, int32_t type, float value);
         static VarLen32 append(VarLen32 array, int32_t type, double value);
         static VarLen32 append(VarLen32 array, int32_t type, VarLen32 value);
+        static VarLen32 append(VarLen32 array, int32_t type);
 
         static VarLen32 slice(VarLen32 array, int32_t type, int32_t lowerBound, int32_t upperBound, int32_t dimension);
 
@@ -58,6 +59,8 @@ namespace lingodb::runtime {
         static int32_t getHighestPosition(VarLen32 array, int32_t type);
 
         static VarLen32 cast(VarLen32 array, int32_t srcType, int32_t dstType);
+
+        static VarLen32 increment(VarLen32 array, int32_t type);
 
     };
 

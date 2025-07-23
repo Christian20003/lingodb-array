@@ -38,7 +38,7 @@ Array::Array(std::string &array) {
     this->type = *data;
     data += 1;
     initArray(data);
-    if (type == ArrayType::INTEGER32 || type == ArrayType::FLOAT) {
+    if (type == ArrayType::INTEGER32 || type == ArrayType::STRING) {
         printData();
     }
 }
@@ -87,6 +87,42 @@ lingodb::runtime::VarLen32 Array::createEmptyArray(int32_t type) {
     writeToBuffer(buffer, &dimension, 1);
     // Widths
     writeToBuffer(buffer, &elements, 1);
+
+    return VarLen32::fromString(result);
+}
+
+lingodb::runtime::VarLen32 Array::increment() {
+    auto typeId = getTypeId(type);
+    auto dimension = this->dimensions + 1;
+    auto totalElements = getSize(true);
+    auto stringLengths = getStringLength();
+    std::string result;
+    auto size = getStringSize(dimension, this->size, getWidthSize() + 1, getNullBytes(totalElements), stringLengths, this->type);
+    result.resize(size);
+    auto *buffer = result.data();
+
+    uint32_t value = 1;
+    // Header
+    writeToBuffer(buffer, ARRAYHEADER.data(), ARRAYHEADER.size());
+    // Type
+    writeToBuffer(buffer, &typeId, 1);
+    // Dimension
+    writeToBuffer(buffer, &dimension, 1);
+    // Size
+    writeToBuffer(buffer, &this->size, 1);
+    // Indices
+    writeToBuffer(buffer, &value, 1);
+    writeToBuffer(buffer, this->indices, this->dimensions);
+    // WidthMap
+    writeToBuffer(buffer, &value, 1);
+    writeToBuffer(buffer, this->dimensionWidthMap, this->dimensions);
+    // Widths
+    writeToBuffer(buffer, &value, 1);
+    writeToBuffer(buffer, this->widths, getWidthSize());
+
+    copyElements(buffer);
+    copyNulls(buffer, this->nulls, totalElements, 0);
+    copyStrings(buffer);
 
     return VarLen32::fromString(result);
 }

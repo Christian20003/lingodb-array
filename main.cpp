@@ -16,7 +16,7 @@ int main() {
     VarLen32 var2 = VarLen32::fromString(string2);
     var2 = ArrayRuntime::fromString(var2, 5);
     
-    std::string string3 = "{{{2,3,4,5,6}}}";
+    std::string string3 = "{{1,2},{3,4,5}}";
     VarLen32 var3 = VarLen32::fromString(string3);
     var3 = ArrayRuntime::fromString(var3, 0);
 
@@ -24,7 +24,7 @@ int main() {
     VarLen32 var4 = VarLen32::fromString(string4);
     // var4 = ArrayRuntime::fromString(var4, mlir::Type::STRING);
 
-    std::string string5 = "{{3,4},{5,6},{7,8}}";
+    std::string string5 = "{{1,2,3}}";
     VarLen32 var5 = VarLen32::fromString(string5);
     var5 = ArrayRuntime::fromString(var5, 0);
 
@@ -32,7 +32,7 @@ int main() {
     VarLen32 var6 = VarLen32::fromString(string6);
     var6 = ArrayRuntime::fromString(var6, 3);
     
-    // VarLen32 op = ArrayRuntime::append(var2, var2, 5, 5);
+    VarLen32 op = ArrayRuntime::append(var1, 0);
     // VarLen32 op = ArrayRuntime::append(var2, 5, var4);
     //VarLen32 op = ArrayRuntime::slice(var1, 0, 2, 3, 1);
     //VarLen32 op = ArrayRuntime::subscript(var2, 5, 2);
@@ -47,8 +47,9 @@ int main() {
     // VarLen32 op = ArrayRuntime::matrixMul(var6, var5, 3, 3);
     // VarLen32 op = ArrayRuntime::cast(var2, 5, 0);
     // op = ArrayRuntime::cast(op, 5, 3);
-    VarLen32 op = ArrayRuntime::transpose(var5, 0);
-    std::string array = var1.str();
+    // VarLen32 op = ArrayRuntime::transpose(var5, 0);
+    // VarLen32 op = ArrayRuntime::increment(var2, 5);
+    std::string array = op.str();
     int pos = ArrayRuntime::getHighestPosition(var1, 0);
     //std::cout << array << std::endl;
     Array result(array);

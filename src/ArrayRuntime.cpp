@@ -50,6 +50,12 @@ lingodb::runtime::VarLen32 ArrayRuntime::append(lingodb::runtime::VarLen32 array
     return arrayObj.append(valueVal);
 }
 
+lingodb::runtime::VarLen32 ArrayRuntime::append(lingodb::runtime::VarLen32 array, int32_t type) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.append();
+}
+
 lingodb::runtime::VarLen32 ArrayRuntime::slice(lingodb::runtime::VarLen32 array, int32_t type, int32_t lowerBound, int32_t upperBound, int32_t dimension) {
     std::string arrayVal = array.str();
     Array arrayObj(arrayVal, type);
@@ -277,4 +283,10 @@ lingodb::runtime::VarLen32 ArrayRuntime::cast(lingodb::runtime::VarLen32 array, 
     std::string arrayVal = array.str();
     Array arrayObj(arrayVal, srcType);
     return arrayObj.cast(dstType);
+}
+
+lingodb::runtime::VarLen32 ArrayRuntime::increment(lingodb::runtime::VarLen32 array, int32_t type) {
+    std::string arrayVal = array.str();
+    Array arrayObj(arrayVal, type);
+    return arrayObj.increment();
 }
