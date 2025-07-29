@@ -19,35 +19,40 @@ lingodb::runtime::VarLen32 ArrayRuntime::append(
         return leftArray.append(rightArray);
 }
 
-lingodb::runtime::VarLen32 ArrayRuntime::append(lingodb::runtime::VarLen32 array, int32_t type, int32_t value) {
+lingodb::runtime::VarLen32 ArrayRuntime::append(lingodb::runtime::VarLen32 array, int32_t type, int32_t value, bool isFront) {
     std::string arrayVal = array.str();
     Array arrayObj(arrayVal, type);
-    return arrayObj.append(value);
+    if (isFront) return arrayObj.appendFront(value);
+    else return arrayObj.append(value);
 }
 
-lingodb::runtime::VarLen32 ArrayRuntime::append(lingodb::runtime::VarLen32 array, int32_t type, int64_t value) {
+lingodb::runtime::VarLen32 ArrayRuntime::append(lingodb::runtime::VarLen32 array, int32_t type, int64_t value, bool isFront) {
     std::string arrayVal = array.str();
     Array arrayObj(arrayVal, type);
-    return arrayObj.append(value);
+    if (isFront) return arrayObj.appendFront(value);
+    else return arrayObj.append(value);
 }
 
-lingodb::runtime::VarLen32 ArrayRuntime::append(lingodb::runtime::VarLen32 array, int32_t type, float value) {
+lingodb::runtime::VarLen32 ArrayRuntime::append(lingodb::runtime::VarLen32 array, int32_t type, float value, bool isFront) {
     std::string arrayVal = array.str();
     Array arrayObj(arrayVal, type);
-    return arrayObj.append(value);
+    if (isFront) return arrayObj.appendFront(value);
+    else return arrayObj.append(value);
 }
 
-lingodb::runtime::VarLen32 ArrayRuntime::append(lingodb::runtime::VarLen32 array, int32_t type, double value) {
+lingodb::runtime::VarLen32 ArrayRuntime::append(lingodb::runtime::VarLen32 array, int32_t type, double value, bool isFront) {
     std::string arrayVal = array.str();
     Array arrayObj(arrayVal, type);
-    return arrayObj.append(value);
+    if (isFront) return arrayObj.appendFront(value);
+    else return arrayObj.append(value);
 }
 
-lingodb::runtime::VarLen32 ArrayRuntime::append(lingodb::runtime::VarLen32 array, int32_t type, VarLen32 value) {
+lingodb::runtime::VarLen32 ArrayRuntime::append(lingodb::runtime::VarLen32 array, int32_t type, VarLen32 value, bool isFront) {
     std::string arrayVal = array.str();
     std::string valueVal = value.str();
     Array arrayObj(arrayVal, type);
-    return arrayObj.append(valueVal);
+    if (isFront) return arrayObj.appendFront(valueVal);
+    else return arrayObj.append(valueVal);
 }
 
 lingodb::runtime::VarLen32 ArrayRuntime::append(lingodb::runtime::VarLen32 array, int32_t type) {

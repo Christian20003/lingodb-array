@@ -32,8 +32,8 @@ int main() {
     VarLen32 var6 = VarLen32::fromString(string6);
     var6 = ArrayRuntime::fromString(var6, 3);
     
-    VarLen32 op = ArrayRuntime::append(var1, 0);
-    // VarLen32 op = ArrayRuntime::append(var2, 5, var4);
+    // VarLen32 op = ArrayRuntime::append(var1, 0);
+    VarLen32 op = ArrayRuntime::append(var2, 5, var4, true);
     //VarLen32 op = ArrayRuntime::slice(var1, 0, 2, 3, 1);
     //VarLen32 op = ArrayRuntime::subscript(var2, 5, 2);
     //op = ArrayRuntime::subscript(op, 5, 2);

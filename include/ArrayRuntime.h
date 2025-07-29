@@ -7,11 +7,11 @@ namespace lingodb::runtime {
         static lingodb::runtime::VarLen32 fromString(lingodb::runtime::VarLen32 str, int32_t type);
 
         static VarLen32 append(VarLen32 left, VarLen32 right, int32_t leftType, int32_t rightType);
-        static VarLen32 append(VarLen32 array, int32_t type, int32_t value);
-        static VarLen32 append(VarLen32 array, int32_t type, int64_t value);
-        static VarLen32 append(VarLen32 array, int32_t type, float value);
-        static VarLen32 append(VarLen32 array, int32_t type, double value);
-        static VarLen32 append(VarLen32 array, int32_t type, VarLen32 value);
+        static VarLen32 append(VarLen32 array, int32_t type, int32_t value, bool isFront);
+        static VarLen32 append(VarLen32 array, int32_t type, int64_t value, bool isFront);
+        static VarLen32 append(VarLen32 array, int32_t type, float value, bool isFront);
+        static VarLen32 append(VarLen32 array, int32_t type, double value, bool isFront);
+        static VarLen32 append(VarLen32 array, int32_t type, VarLen32 value, bool isFront);
         static VarLen32 append(VarLen32 array, int32_t type);
 
         static VarLen32 slice(VarLen32 array, int32_t type, int32_t lowerBound, int32_t upperBound, int32_t dimension);
